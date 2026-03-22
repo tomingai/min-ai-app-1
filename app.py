@@ -15,13 +15,25 @@ if api_key:
     
     if bild:
         st.image(bild, caption="Din bild", use_container_width=True)
-        if st.button("🚀 Skapa Video & Musik"):
+        if st.button("🚀 Starta generering"):
             with st.spinner("AI:n jobbar... vänta ca 1 min."):
-                # Skapa Video
-                vid = replicate.run("stability-ai/stable-video-diffusion:ac7327c2014dba223a6ca27c770315e794961d552e751fd3f23019705537e83e", input={"input_image": bild})
-                st.video(vid)
-                # Skapa Musik
-                mus = replicate.run("facebookresearch/musicgen:7b3212fb7983471439735c0529d06634", input={"prompt": "cinematic music", "duration": 8})
-                st.audio(mus)
+                try:
+                    # Skapa Video (Uppdaterad version)
+                    vid = replicate.run(
+                        "stability-ai/stable-video-diffusion", 
+                        input={"input_image": bild}
+                    )
+                    st.video(vid)
+                    
+                    # Skapa Musik
+                    mus = replicate.run(
+                        "facebookresearch/musicgen", 
+                        input={"prompt": "cinematic music", "duration": 8}
+                    )
+                    st.audio(mus)
+                    st.success("Klart!")
+                except Exception as e:
+                    st.error(f"Ett fel uppstod: {e}")
 else:
     st.info("Börja med att klistra in din API-nyckel i sidomenyn!")
+
