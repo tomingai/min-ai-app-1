@@ -2,7 +2,7 @@ import streamlit as st
 import replicate
 import os
 
-st.set_page_config(page_title="AI Studio 2.0", layout="centered")
+st.set_page_config(page_title="AI Studio Pro", layout="centered")
 st.title("🎬 AI Studio: Bild ➔ Video ➔ Musik")
 
 with st.sidebar:
@@ -17,7 +17,7 @@ if api_key:
         st.image(bild, caption="Din bild", use_container_width=True)
         if st.button("🚀 Starta generering"):
             
-            # --- 1. VIDEO (SVD-XT - Denna version är aktiv NU) ---
+            # --- 1. VIDEO (Stability AI - SVD-XT senaste stabila version) ---
             with st.spinner("Animerar bild... (ca 1 min)"):
                 try:
                     video_output = replicate.run(
@@ -28,7 +28,7 @@ if api_key:
                 except Exception as e:
                     st.error(f"Video-fel: {e}")
 
-            # --- 2. MUSIK (MusicGen Melody - Denna version är aktiv NU) ---
+            # --- 2. MUSIK (MusicGen Melody - Senaste stabila version) ---
             with st.spinner("Komponerar musik..."):
                 try:
                     music_output = replicate.run(
@@ -39,7 +39,7 @@ if api_key:
                 except Exception as e:
                     st.error(f"Musik-fel: {e}")
             
-            st.success("✨ Klar!")
+            st.success("✨ Generering klar!")
 else:
     st.info("Börja med att klistra in din API-nyckel i sidomenyn!")
 
