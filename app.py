@@ -2,8 +2,8 @@ import streamlit as st
 import replicate
 import os
 
-st.set_page_config(page_title="AI Studio Pro", layout="centered")
-st.title("🎬 AI Studio: Bild ➔ Video ➔ Musik")
+st.set_page_config(page_title="AI Studio Pro: MiniMax", layout="centered")
+st.title("🎬 AI Studio: Bild ➔ Video (MiniMax) ➔ Musik")
 
 with st.sidebar:
     st.header("Inställningar")
@@ -15,35 +15,39 @@ if api_key:
     
     if bild:
         st.image(bild, caption="Din bild", use_container_width=True)
-        if st.button("🚀 Starta generering"):
+        prompt_text = st.text_input("Beskriv rörelsen (t.ex. 'vågor som slår mot stranden'):", "cinematic movement")
+        
+        if st.button("🚀 Starta MiniMax-generering"):
             
-            # --- 1. SKAPA VIDEO (SVD-XT - Denna version är aktiv NU) ---
-            with st.spinner("Animerar bild... (ca 1 min)"):
+            # --- 1. SKAPA VIDEO (MiniMax Video-01) ---
+            with st.spinner("MiniMax skapar video... (detta är hög kvalitet, kan ta 1-2 min)"):
                 try:
-                    # Detta är den dagsfärska versionen av Stable Video Diffusion
                     video_output = replicate.run(
-                        "stability-ai/stable-video-diffusion:ac7327c2014dba223a6ca27c770315e794961d552e751fd3f23019705537e83e",
-                        input={"input_image": bild}
+                        "minimax/video-01",
+                        input={
+                            "prompt": prompt_text,
+                            "first_frame_image": bild,
+                            "prompt_optimizer": True
+                        }
                     )
+                    # MiniMax returnerar en fil-liknande länk
                     st.video(video_output)
                 except Exception as e:
                     st.error(f"Video-fel: {e}")
 
-            # --- 2. SKAPA MUSIK (MusicGen - Denna version är aktiv NU) ---
+            # --- 2. SKAPA MUSIK (MusicGen) ---
             with st.spinner("Komponerar musik..."):
                 try:
-                    # Detta är den dagsfärska versionen av MusicGen
                     music_output = replicate.run(
                         "facebookresearch/musicgen:7b3212fb7983471439735c0529d06634",
-                        input={"prompt": "cinematic and emotional soundtrack", "duration": 8}
+                        input={"prompt": f"soundtrack for {prompt_text}", "duration": 10}
                     )
                     st.audio(music_output)
                 except Exception as e:
                     st.error(f"Musik-fel: {e}")
             
-            st.success("✨ Försök slutfört!")
+            st.success("✨ Generering slutförd med MiniMax!")
 else:
     st.info("Börja med att klistra in din API-nyckel i sidomenyn!")
-
 
 
