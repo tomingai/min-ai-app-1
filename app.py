@@ -2,11 +2,10 @@ import streamlit as st
 import replicate
 import os
 
-st.set_page_config(page_title="AI Multi-Studio", layout="centered")
+st.set_page_config(page_title="AI Studio", layout="centered")
 st.title("🎬 AI Studio: Bild ➔ Video ➔ Musik")
 
 with st.sidebar:
-    st.header("Inställningar")
     api_key = st.text_input("Klistra in din Replicate API-nyckel:", type="password")
 
 if api_key:
@@ -18,16 +17,16 @@ if api_key:
         if st.button("🚀 Starta generering"):
             with st.spinner("AI:n jobbar... vänta ca 1 min."):
                 try:
-                    # Skapa Video (Uppdaterad version)
+                    # Skapar Video (Vi använder den senaste stabila versionen)
                     vid = replicate.run(
-                        "stability-ai/stable-video-diffusion", 
+                        "stability-ai/stable-video-diffusion:ac7327c2014dba223a6ca27c770315e794961d552e751fd3f23019705537e83e",
                         input={"input_image": bild}
                     )
                     st.video(vid)
                     
-                    # Skapa Musik
+                    # Skapar Musik
                     mus = replicate.run(
-                        "facebookresearch/musicgen", 
+                        "facebookresearch/musicgen:7b3212fb7983471439735c0529d06634",
                         input={"prompt": "cinematic music", "duration": 8}
                     )
                     st.audio(mus)
