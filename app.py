@@ -17,23 +17,22 @@ if api_key:
         if st.button("🚀 Starta generering"):
             with st.spinner("AI:n jobbar... vänta ca 1-2 minuter."):
                 try:
-                    # 1. Skapa Video (Senaste stabila versionen av SVD-XT)
+                    # 1. Skapa Video (Vi använder basnamnet för att alltid få senaste)
                     vid = replicate.run(
-                        "stability-ai/stable-video-diffusion:3f0ad1d533866c105be60ca8cd20f7efba29a1a45749f3e098863f6a27e3d166",
-                        input={"input_image": bild, "video_length": "14_frames_with_svd"}
+                        "stability-ai/stable-video-diffusion",
+                        input={"input_image": bild}
                     )
                     st.video(vid)
                     
-                    # 2. Skapa Musik (Senaste versionen av MusicGen Melody)
+                    # 2. Skapa Musik (Basnamnet för MusicGen)
                     mus = replicate.run(
-                        "facebookresearch/musicgen:7b3212fb7983471439735c0529d06634",
+                        "facebookresearch/musicgen",
                         input={"prompt": "cinematic and atmospheric music", "duration": 8}
                     )
                     st.audio(mus)
                     st.success("Klart!")
                 except Exception as e:
                     st.error(f"Ett fel uppstod: {e}")
-                    st.info("Tips: Kontrollera att du har lagt in ett betalkort på Replicate (billing) då gratis-testningen ofta är begränsad.")
 else:
     st.info("Börja med att klistra in din API-nyckel i sidomenyn!")
 
