@@ -3,11 +3,11 @@ import replicate
 import os
 
 st.set_page_config(page_title="AI Studio Pro: MiniMax", layout="centered")
-st.title("🎬 AI Studio: Bild ➔ Video (MiniMax) ➔ Musik")
+st.title("🎬 AI Studio: Bild ➔ Video ➔ Musik")
 
 with st.sidebar:
     st.header("Inställningar")
-    api_key = st.text_input("Klistra in din Replicate API-nyckel:", type="password")
+    api_key = st.sidebar.text_input("Klistra in din Replicate API-nyckel:", type="password")
 
 if api_key:
     os.environ["REPLICATE_API_TOKEN"] = api_key
@@ -17,12 +17,12 @@ if api_key:
         st.image(bild, caption="Din bild", use_container_width=True)
         prompt_text = st.text_input("Beskriv rörelsen:", "cinematic movement, high quality")
         
-        if st.button("🚀 Starta MiniMax-generering"):
+        if st.button("🚀 Starta AI-generering"):
             
-            # --- 1. SKAPA VIDEO (MiniMax Video-01) ---
+            # --- 1. SKAPA VIDEO (MiniMax) ---
             with st.spinner("MiniMax skapar video... (ca 1-2 min)"):
                 try:
-                    output = replicate.run(
+                    video_output = replicate.run(
                         "minimax/video-01",
                         input={
                             "prompt": prompt_text,
@@ -30,22 +30,23 @@ if api_key:
                             "prompt_optimizer": True
                         }
                     )
-                    # FIX: Vi använder .url för att Streamlit ska kunna visa videon rätt
-                    st.subheader("Din AI-Video")
-                    st.video(output.url)
+                    st.subheader("1. Din AI-Video")
+                    st.video(video_output)
                 except Exception as e:
                     st.error(f"Video-fel: {e}")
 
-            # --- 2. SKAPA MUSIK (MusicGen) ---
+            # --- 2. SKAPA MUSIK (AudioLDM - Stabilare!) ---
             with st.spinner("Komponerar musik..."):
                 try:
-                    # Uppdaterad sifferkod för MusicGen Melody
+                    # Vi använder AudioLDM som är mycket mer pålitlig för API:er
                     music_output = replicate.run(
-                        "facebookresearch/musicgen:7b3212fb7983471439735c0529d06634",
-                        input={"prompt": f"soundtrack for {prompt_text}", "duration": 10}
+                        "cvssp/audioldm:b61392adec474775060c0ad3f71bc5a951458a5c97818b4e551f8aba3969139d",
+                        input={
+                            "text": f"cinematic soundtrack for {prompt_text}",
+                            "duration": "10"
+                        }
                     )
-                    st.subheader("Din AI-Musik")
-                    # Musik-AI returnerar också en länk som vi spelar upp
+                    st.subheader("2. Din AI-Musik")
                     st.audio(music_output)
                 except Exception as e:
                     st.error(f"Musik-fel: {e}")
