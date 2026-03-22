@@ -17,24 +17,26 @@ if api_key:
         st.image(bild, caption="Din bild", use_container_width=True)
         if st.button("🚀 Starta generering"):
             
-            # --- 1. SKAPA VIDEO (Senaste SVD) ---
+            # --- 1. SKAPA VIDEO (Pika - Mycket stabil modell) ---
             with st.spinner("Animerar bild... (ca 1 min)"):
                 try:
-                    # Vi tar bort sifferkoden efter kolonet för att få senaste versionen
-                    model = replicate.models.get("stability-ai/stable-video-diffusion")
-                    version = model.versions.list()[0] # Hämtar den nyaste versionen automatiskt
-                    video_output = version.predict(input_image=bild)
+                    # Vi använder den senaste stabila Pika-modellen
+                    video_output = replicate.run(
+                        "pika/pika-art:63606a246874a90f96894c25d80429f582f3b9e4368132e05b9b8b0e7d56e9c9",
+                        input={"image": bild}
+                    )
                     st.video(video_output)
                 except Exception as e:
                     st.error(f"Video-fel: {e}")
 
-            # --- 2. SKAPA MUSIK (Senaste MusicGen) ---
+            # --- 2. SKAPA MUSIK (AudioLDM - Mycket stabil modell) ---
             with st.spinner("Komponerar musik..."):
                 try:
-                    # Samma här, hämtar senaste versionen automatiskt
-                    model = replicate.models.get("facebookresearch/musicgen")
-                    version = model.versions.list()[0]
-                    music_output = version.predict(prompt="cinematic soundtrack", duration=8)
+                    # Vi använder AudioLDM som är känd för att fungera direkt
+                    music_output = replicate.run(
+                        "cvssp/audioldm:b61392adec474775060c0ad3f71bc5a951458a5c97818b4e551f8aba3969139d",
+                        input={"text": "cinematic and emotional soundtrack", "duration": "10"}
+                    )
                     st.audio(music_output)
                 except Exception as e:
                     st.error(f"Musik-fel: {e}")
@@ -42,5 +44,6 @@ if api_key:
             st.success("✨ Generering klar!")
 else:
     st.info("Börja med att klistra in din API-nyckel i sidomenyn!")
+
 
 
