@@ -15,14 +15,14 @@ if api_key:
     
     if bild:
         st.image(bild, caption="Din bild", use_container_width=True)
-        prompt_text = st.text_input("Beskriv rörelsen (t.ex. 'vågor som slår mot stranden'):", "cinematic movement")
+        prompt_text = st.text_input("Beskriv rörelsen:", "cinematic movement, high quality")
         
         if st.button("🚀 Starta MiniMax-generering"):
             
             # --- 1. SKAPA VIDEO (MiniMax Video-01) ---
-            with st.spinner("MiniMax skapar video... (detta är hög kvalitet, kan ta 1-2 min)"):
+            with st.spinner("MiniMax skapar video... (ca 1-2 min)"):
                 try:
-                    video_output = replicate.run(
+                    output = replicate.run(
                         "minimax/video-01",
                         input={
                             "prompt": prompt_text,
@@ -30,23 +30,27 @@ if api_key:
                             "prompt_optimizer": True
                         }
                     )
-                    # MiniMax returnerar en fil-liknande länk
-                    st.video(video_output)
+                    # FIX: Vi använder .url för att Streamlit ska kunna visa videon rätt
+                    st.subheader("Din AI-Video")
+                    st.video(output.url)
                 except Exception as e:
                     st.error(f"Video-fel: {e}")
 
             # --- 2. SKAPA MUSIK (MusicGen) ---
             with st.spinner("Komponerar musik..."):
                 try:
+                    # Uppdaterad sifferkod för MusicGen Melody
                     music_output = replicate.run(
                         "facebookresearch/musicgen:7b3212fb7983471439735c0529d06634",
                         input={"prompt": f"soundtrack for {prompt_text}", "duration": 10}
                     )
+                    st.subheader("Din AI-Musik")
+                    # Musik-AI returnerar också en länk som vi spelar upp
                     st.audio(music_output)
                 except Exception as e:
                     st.error(f"Musik-fel: {e}")
             
-            st.success("✨ Generering slutförd med MiniMax!")
+            st.success("✨ Allt klart!")
 else:
     st.info("Börja med att klistra in din API-nyckel i sidomenyn!")
 
