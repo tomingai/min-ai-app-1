@@ -17,30 +17,29 @@ if api_key:
         st.image(bild, caption="Din bild", use_container_width=True)
         if st.button("🚀 Starta generering"):
             
-            # --- 1. VIDEO (Stabil metod) ---
+            # --- 1. SKAPA VIDEO (Senaste SVD) ---
             with st.spinner("Animerar bild... (ca 1 min)"):
                 try:
-                    # Vi använder den officiella modellen direkt
-                    video_output = replicate.run(
-                        "stability-ai/stable-video-diffusion:ac7327c2014dba223a6ca27c770315e794961d552e751fd3f23019705537e83e",
-                        input={"input_image": bild}
-                    )
+                    # Vi tar bort sifferkoden efter kolonet för att få senaste versionen
+                    model = replicate.models.get("stability-ai/stable-video-diffusion")
+                    version = model.versions.list()[0] # Hämtar den nyaste versionen automatiskt
+                    video_output = version.predict(input_image=bild)
                     st.video(video_output)
                 except Exception as e:
                     st.error(f"Video-fel: {e}")
 
-            # --- 2. MUSIK (Stabil metod) ---
+            # --- 2. SKAPA MUSIK (Senaste MusicGen) ---
             with st.spinner("Komponerar musik..."):
                 try:
-                    music_output = replicate.run(
-                        "facebookresearch/musicgen:7b3212fb7983471439735c0529d06634",
-                        input={"prompt": "cinematic soundtrack", "duration": 8}
-                    )
+                    # Samma här, hämtar senaste versionen automatiskt
+                    model = replicate.models.get("facebookresearch/musicgen")
+                    version = model.versions.list()[0]
+                    music_output = version.predict(prompt="cinematic soundtrack", duration=8)
                     st.audio(music_output)
                 except Exception as e:
                     st.error(f"Musik-fel: {e}")
             
-            st.success("✨ Försök slutfört!")
+            st.success("✨ Generering klar!")
 else:
     st.info("Börja med att klistra in din API-nyckel i sidomenyn!")
 
