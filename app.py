@@ -2,7 +2,7 @@ import streamlit as st
 import replicate
 import os
 
-st.set_page_config(page_title="AI Studio 2.0", layout="centered")
+st.set_page_config(page_title="AI Studio Pro", layout="centered")
 st.title("🎬 AI Studio: Bild ➔ Video ➔ Musik")
 
 with st.sidebar:
@@ -18,32 +18,30 @@ if api_key:
         if st.button("🚀 Starta generering"):
             
             # --- STEG 1: SKAPA VIDEO ---
-            with st.spinner("AI:n animerar din bild... (ca 1 min)"):
+            with st.spinner("Animerar bild... (ca 1 min)"):
                 try:
-                    # Vi använder modellnamnet utan sifferkod för att få senaste versionen
+                    # Senaste aktiva versionen av Stable Video Diffusion XT
                     video_output = replicate.run(
-                        "stability-ai/stable-video-diffusion",
-                        input={"input_image": bild}
+                        "stability-ai/stable-video-diffusion:ac7327c2014dba223a6ca27c770315e794961d552e751fd3f23019705537e83e",
+                        input={"input_image": bild, "video_length": "14_frames_with_svd"}
                     )
-                    st.subheader("1. Din AI-Video")
                     st.video(video_output)
                 except Exception as e:
                     st.error(f"Video-fel: {e}")
 
             # --- STEG 2: SKAPA MUSIK ---
-            with st.spinner("AI:n komponerar musik..."):
+            with st.spinner("Komponerar musik..."):
                 try:
-                    # Vi använder modellnamnet utan sifferkod här också
+                    # Senaste aktiva versionen av MusicGen Melody
                     music_output = replicate.run(
-                        "facebookresearch/musicgen",
+                        "facebookresearch/musicgen:7b3212fb7983471439735c0529d06634",
                         input={"prompt": "cinematic and emotional soundtrack", "duration": 8}
                     )
-                    st.subheader("2. Din AI-Musik")
                     st.audio(music_output)
                 except Exception as e:
                     st.error(f"Musik-fel: {e}")
             
-            st.success("✨ Allt klart!")
+            st.success("✨ Generering klar!")
 else:
     st.info("Börja med att klistra in din API-nyckel i sidomenyn!")
 
