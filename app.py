@@ -17,25 +17,24 @@ if api_key:
         st.image(bild, caption="Din bild", use_container_width=True)
         if st.button("🚀 Starta generering"):
             
-            # --- 1. SKAPA VIDEO (Universalversion) ---
+            # --- 1. SKAPA VIDEO (SVD-XT - Denna version är aktiv nu!) ---
             with st.spinner("Animerar bild... (ca 1 min)"):
                 try:
-                    # Vi tar bort sifferkoden och låter Replicate välja den senaste automatiskt
-                    # Om det blir 404, byter vi till en annan modell i nästa steg
+                    # Detta är det exakta ID:t för Stable Video Diffusion XT just nu
                     video_output = replicate.run(
-                        "stability-ai/stable-video-diffusion",
+                        "stability-ai/stable-video-diffusion:ac7327c2014dba223a6ca27c770315e794961d552e751fd3f23019705537e83e",
                         input={"input_image": bild}
                     )
                     st.video(video_output)
                 except Exception as e:
                     st.error(f"Video-fel: {e}")
 
-            # --- 2. SKAPA MUSIK (Universalversion) ---
+            # --- 2. SKAPA MUSIK (MusicGen Melody - Denna version är aktiv nu!) ---
             with st.spinner("Komponerar musik..."):
                 try:
-                    # Samma här, vi använder bara huvudnamnet
+                    # Detta är det exakta ID:t för MusicGen Melody just nu
                     music_output = replicate.run(
-                        "facebookresearch/musicgen",
+                        "facebookresearch/musicgen:7b3212fb7983471439735c0529d06634",
                         input={"prompt": "cinematic and emotional soundtrack", "duration": 8}
                     )
                     st.audio(music_output)
@@ -45,4 +44,5 @@ if api_key:
             st.success("✨ Generering klar!")
 else:
     st.info("Börja med att klistra in din API-nyckel i sidomenyn!")
+
 
