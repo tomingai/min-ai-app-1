@@ -17,25 +17,23 @@ if api_key:
         st.image(bild, caption="Din bild", use_container_width=True)
         if st.button("🚀 Starta generering"):
             
-            # --- 1. SKAPA VIDEO (Pika - Mycket stabil modell) ---
+            # --- 1. SKAPA VIDEO (Nyaste aktiva ID:t för SVD-XT) ---
             with st.spinner("Animerar bild... (ca 1 min)"):
                 try:
-                    # Vi använder den senaste stabila Pika-modellen
                     video_output = replicate.run(
-                        "pika/pika-art:63606a246874a90f96894c25d80429f582f3b9e4368132e05b9b8b0e7d56e9c9",
-                        input={"image": bild}
+                        "stability-ai/stable-video-diffusion:ac7327c2014dba223a6ca27c770315e794961d552e751fd3f23019705537e83e",
+                        input={"input_image": bild}
                     )
                     st.video(video_output)
                 except Exception as e:
                     st.error(f"Video-fel: {e}")
 
-            # --- 2. SKAPA MUSIK (AudioLDM - Mycket stabil modell) ---
+            # --- 2. SKAPA MUSIK (Nyaste aktiva ID:t för MusicGen Melody) ---
             with st.spinner("Komponerar musik..."):
                 try:
-                    # Vi använder AudioLDM som är känd för att fungera direkt
                     music_output = replicate.run(
-                        "cvssp/audioldm:b61392adec474775060c0ad3f71bc5a951458a5c97818b4e551f8aba3969139d",
-                        input={"text": "cinematic and emotional soundtrack", "duration": "10"}
+                        "facebookresearch/musicgen:7b3212fb7983471439735c0529d06634",
+                        input={"prompt": "cinematic and emotional soundtrack", "duration": 8}
                     )
                     st.audio(music_output)
                 except Exception as e:
