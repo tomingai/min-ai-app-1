@@ -17,25 +17,25 @@ if api_key:
         st.image(bild, caption="Din bild", use_container_width=True)
         if st.button("🚀 Starta generering"):
             
-            # --- STEG 1: SKAPA VIDEO ---
+            # --- 1. SKAPA VIDEO (Ny stabil modell: Luma Dream Machine eller SVD-XT) ---
             with st.spinner("Animerar bild... (ca 1 min)"):
                 try:
-                    # Senaste aktiva versionen av Stable Video Diffusion XT
+                    # Vi använder den senaste versionen av SVD via en förenklad länk
                     video_output = replicate.run(
                         "stability-ai/stable-video-diffusion:ac7327c2014dba223a6ca27c770315e794961d552e751fd3f23019705537e83e",
-                        input={"input_image": bild, "video_length": "14_frames_with_svd"}
+                        input={"input_image": bild}
                     )
                     st.video(video_output)
                 except Exception as e:
                     st.error(f"Video-fel: {e}")
 
-            # --- STEG 2: SKAPA MUSIK ---
+            # --- 2. SKAPA MUSIK (Ny stabil modell: AudioLDM) ---
             with st.spinner("Komponerar musik..."):
                 try:
-                    # Senaste aktiva versionen av MusicGen Melody
+                    # Vi byter till AudioLDM som ofta är mer tillåtande
                     music_output = replicate.run(
-                        "facebookresearch/musicgen:7b3212fb7983471439735c0529d06634",
-                        input={"prompt": "cinematic and emotional soundtrack", "duration": 8}
+                        "cvssp/audioldm:b61392adec474775060c0ad3f71bc5a951458a5c97818b4e551f8aba3969139d",
+                        input={"text": "cinematic and emotional soundtrack", "duration": "10"}
                     )
                     st.audio(music_output)
                 except Exception as e:
@@ -44,4 +44,5 @@ if api_key:
             st.success("✨ Generering klar!")
 else:
     st.info("Börja med att klistra in din API-nyckel i sidomenyn!")
+
 
