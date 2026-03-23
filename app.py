@@ -24,7 +24,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-st.markdown('<div class="neon-wrapper"><p class="neon-text">TOMINGAI</p><p style="color:#00f2ff;">A.I. AUTO-DIRECTOR ENGINE</p></div>', unsafe_allow_html=True)
+st.markdown('<div class="neon-wrapper"><p class="neon-text">TOMINGAI</p><p style="color:#00f2ff;">A.I. VOICE & MOVIE ENGINE</p></div>', unsafe_allow_html=True)
 
 if "REPLICATE_API_TOKEN" in st.secrets:
     os.environ["REPLICATE_API_TOKEN"] = st.secrets["REPLICATE_API_TOKEN"]
@@ -40,29 +40,30 @@ if api_key_found:
         bild = st.file_uploader("Ladda upp bild", type=["jpg", "png", "jpeg"])
         if bild: 
             st.image(bild, use_container_width=True)
-            if st.button("🪄 SKAPA MAGISKT MANUS & TEXT"):
-                with st.spinner("AI:n skriver ditt manus..."):
+            if st.button("🪄 SKAPA MAGISK TEXT"):
+                with st.spinner("AI:n skriver ren text..."):
                     try:
-                        # Vi använder Llama 3 för att skriva både kamerarörelse och låttext
-                        # Det här anropet är mycket stabilt!
-                        prompt = f"Skapa ett filmmanus och en låttext för en person i en bild med stilen {st.session_state.get('stil_choice', 'Cyberpunk')}. Svara i JSON-format med 'video' (engelska) och 'lyrics' (svenska, 4 rader)."
-                        
+                        prompt = f"Skriv exakt 4 korta rimmade rader på svenska för en låt i stilen {st.session_state.get('stil_choice', 'Cyberpunk')}. Svara BARA med de 4 raderna, ingen annan text, inga rubriker, inga parenteser."
                         response = replicate.run(
                             "meta/meta-llama-3-70b-instruct",
-                            input={"prompt": prompt, "system_prompt": "Du är en filmregissör och låtskrivare. Svara bara med den begärda texten."}
+                            input={
+                                "prompt": prompt,
+                                "system_prompt": "Du är en professionell låtskrivare. Du svarar ALDRIG med JSON eller metadata. Du svarar ENDAST med den rena svenska texten."
+                            }
                         )
-                        full_text = "".join(response)
+                        # Tvättar bort eventuellt skräp om AI:n ändå försöker med JSON
+                        clean_text = "".join(response).replace('{', '').replace('}', '').replace('"lyrics":', '').replace('"', '').strip()
                         
-                        # Vi förenklar: Vi delar upp texten lite snyggt
+                        st.session_state['ai_lyrics'] = clean_text
                         st.session_state['ai_v_prompt'] = "Slow cinematic zoom, high quality"
-                        st.session_state['ai_lyrics'] = full_text[:200] # Tar början av AI-texten
                         st.rerun()
                     except Exception as e:
                         st.error(f"AI-fel: {e}")
 
     with col2:
-        st.subheader("🧠 PROCESSOR: AUTOMANUS")
-        stil = st.selectbox("Filmstil:", ["Cyberpunk", "Vintage 8mm", "Cinematic", "Anime", "Pop Art"], key="stil_choice")
+        st.subheader("🧠 PROCESSOR: RÖST & STIL")
+        stil = st.selectbox("Filmstil:", ["Cyberpunk", "Vintage 8mm", "Cinematic", "Pop Art"], key="stil_choice")
+        rost = st.radio("Välj röst som sjunger:", ["Kvinna (Female)", "Man (Male)"])
         
         v_prompt = st.text_input("Kamerarörelse:", st.session_state.get('ai_v_prompt', "Slow cinematic zoom"))
         lyrics = st.text_area("Låttext (Svenska):", st.session_state.get('ai_lyrics', "[Instrumental]"))
@@ -73,10 +74,15 @@ if api_key_found:
             else:
                 with st.status("PROSESSERAR NEON-DATA...", expanded=True):
                     try:
-                        # MiniMax anropen (dessa är de viktigaste och fungerar bäst!)
-                        v_url = str(replicate.run("minimax/video-01", input={"prompt": f"{v_prompt}, in {stil} style", "first_frame_image": bild}))
-                        m_url = str(replicate.run("minimax/music-1.5", input={"prompt": f"{stil} soundtrack", "lyrics": lyrics}))
+                        # 1. Video (MiniMax)
+                        st.write("🎥 Genererar video...")
+                        v_url = str(replicate.run("minimax/video-01", input={"prompt": f"{v_prompt}, {stil} style", "first_frame_image": bild}))
 
+                        # 2. Musik & Sång (MiniMax Music-1.5)
+                        st.write("🎵 Genererar sång...")
+                        m_url = str(replicate.run("minimax/music-1.5", input={"prompt": f"{stil} style, {rost} vocals, high quality", "lyrics": lyrics}))
+
+                        # 3. Montering
                         with open("v.mp4", "wb") as f: f.write(requests.get(v_url).content)
                         with open("a.mp3", "wb") as f: f.write(requests.get(m_url).content)
                         
@@ -90,7 +96,7 @@ if api_key_found:
                     except Exception as e:
                         st.error(f"SYSTEMFEL: {e}")
 else:
-    st.error("⚠️ ÅTKOMST NEKAD: Lägg till REPLICATE_API_TOKEN i Streamlit Secrets.")
+    st.error("⚠️ ÅTKOMST NEKAD: Kontrollera dina Secrets.")
 
 
 
