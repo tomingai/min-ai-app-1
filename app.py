@@ -4,80 +4,31 @@ import os
 import requests
 from moviepy.editor import VideoFileClip, AudioFileClip
 
-# --- 1. SETUP & ULTRA-CLEAR NEON DESIGN ---
+# --- 1. SETUP & DESIGN (HD NEON) ---
 st.set_page_config(page_title="TOMINGAI NEON STUDIO", page_icon="⚡", layout="wide")
 
 st.markdown("""
     <style>
     .main { background-color: #050505; }
-    
-    /* HD NEON LOGO - EXTRA TYDLIG */
     .neon-container {
         background: linear-gradient(180deg, #0a0a0a 0%, #000000 100%);
-        padding: 40px;
-        border-radius: 20px;
-        border: 2px solid #00f2ff;
+        padding: 40px; border-radius: 20px; border: 2px solid #00f2ff;
         box-shadow: 0px 0px 40px rgba(0, 242, 255, 0.4);
-        text-align: center;
-        margin-bottom: 50px;
+        text-align: center; margin-bottom: 50px;
     }
     .neon-title {
-        font-family: 'Arial Black', Gadget, sans-serif;
-        font-size: 75px;
-        font-weight: 900;
-        color: #ffffff;
-        text-transform: uppercase;
-        letter-spacing: 10px;
-        line-height: 1;
-        margin: 0;
-        text-shadow: 
-            0 0 7px #fff,
-            0 0 10px #fff,
-            0 0 21px #fff,
-            0 0 42px #00f2ff,
-            0 0 82px #00f2ff;
+        font-family: 'Arial Black', sans-serif; font-size: 75px; font-weight: 900;
+        color: #ffffff; text-transform: uppercase; letter-spacing: 10px;
+        text-shadow: 0 0 10px #fff, 0 0 40px #00f2ff, 0 0 80px #00f2ff;
     }
-    .neon-subtitle {
-        color: #00f2ff;
-        font-family: 'Courier New', monospace;
-        font-size: 14px;
-        font-weight: bold;
-        letter-spacing: 12px;
-        text-transform: uppercase;
-        margin-top: 25px;
-        opacity: 0.9;
-        text-shadow: 0 0 5px #00f2ff;
-    }
-    
-    /* FLIKAR & KNAPPAR */
-    .stTabs [data-baseweb="tab-list"] { gap: 24px; justify-content: center; }
     .stTabs [aria-selected="true"] { background-color: #00f2ff !important; color: black !important; font-weight: bold; }
-    .stButton>button {
-        background-color: transparent;
-        color: #00f2ff;
-        border: 2px solid #00f2ff;
-        border-radius: 8px;
-        width: 100%;
-        font-weight: bold;
-        transition: 0.3s;
-    }
-    .stButton>button:hover {
-        background-color: #00f2ff;
-        color: black;
-        box-shadow: 0px 0px 20px #00f2ff;
-    }
+    .stButton>button { background-color: transparent; color: #00f2ff; border: 2px solid #00f2ff; width: 100%; font-weight: bold; }
+    .stButton>button:hover { background-color: #00f2ff; color: black; box-shadow: 0px 0px 20px #00f2ff; }
     </style>
     """, unsafe_allow_html=True)
 
-# Visa den suveräna logotypen
-st.markdown("""
-    <div class="neon-container">
-        <p class="neon-title">TOMINGAI</p>
-        <p class="neon-subtitle">A.I. NEON ENGINE // MASTER STUDIO</p>
-    </div>
-    """, unsafe_allow_html=True)
+st.markdown('<div class="neon-container"><p class="neon-title">TOMINGAI</p><p style="color:#00f2ff; letter-spacing:10px;">A.I. MASTER STUDIO</p></div>', unsafe_allow_html=True)
 
-# Hämta API-nyckel automatiskt från Secrets
 if "REPLICATE_API_TOKEN" in st.secrets:
     os.environ["REPLICATE_API_TOKEN"] = st.secrets["REPLICATE_API_TOKEN"]
     api_key_found = True
@@ -85,74 +36,67 @@ else:
     api_key_found = False
 
 if api_key_found:
-    # SKAPA FLIKAR FÖR OLIKA LÄGEN
-    tab1, tab2 = st.tabs(["🎬 MUSIKVIDEO (BILD + LJUD)", "🎧 BARA MUSIK (SINGEL)"])
+    tab1, tab2 = st.tabs(["🎬 MUSIKVIDEO", "🎧 BARA MUSIK"])
 
     # --- FLIK 1: MUSIKVIDEO ---
     with tab1:
         col1, col2 = st.columns(2)
         with col1:
-            st.subheader("📡 DATAKÄLLA: BILD")
-            bild = st.file_uploader("Ladda upp din startbild", type=["jpg", "png", "jpeg"], key="video_img")
+            bild = st.file_uploader("Ladda upp bild", type=["jpg", "png", "jpeg"], key="v_img")
             if bild: st.image(bild, use_container_width=True)
-            
         with col2:
-            st.subheader("🧠 PROCESSOR: MOVIE-MODE")
-            v_stil = st.selectbox("Filmstil:", ["Cyberpunk", "Vintage 8mm", "Cinematic", "Anime"], key="v_stil")
-            v_lyr = st.text_area("Låttext (Lyrics):", "[Instrumental]", key="v_lyr", help="Skriv text för sång eller behåll [Instrumental]")
-            v_rost = st.radio("Sångröst:", ["Kvinna (Female)", "Man (Male)"], key="v_rost", horizontal=True)
+            v_stil = st.selectbox("Stil:", ["Cyberpunk", "Cinematic", "Anime", "Vintage"], key="v_stil")
+            v_input = st.text_input("Kort rad eller ord för låten:", "Sommarregn", key="v_input")
             
-            if st.button("⚡ PRODUCERA MÄSTERVERK", key="v_btn"):
-                if bild:
-                    with st.status("INITIALISERAR FULL PRODUKTION...", expanded=True):
-                        try:
-                            # 1. Video (MiniMax)
-                            v_url = str(replicate.run("minimax/video-01", input={"prompt": f"Cinematic movement, {v_stil} style, 4k", "first_frame_image": bild}))
-                            # 2. Musik & Sång (MiniMax)
-                            m_url = str(replicate.run("minimax/music-1.5", input={"prompt": f"{v_stil} style, {v_rost} vocals", "lyrics": v_lyr}))
-                            
-                            # 3. Montering
-                            with open("v.mp4", "wb") as f: f.write(requests.get(v_url).content)
-                            with open("a.mp3", "wb") as f: f.write(requests.get(m_url).content)
-                            clip = VideoFileClip("v.mp4")
-                            audio = AudioFileClip("a.mp3").set_duration(clip.duration)
-                            clip.set_audio(audio).write_videofile("out.mp4", codec="libx264", audio_codec="aac")
-                            
-                            st.video("out.mp4")
-                            st.download_button("💾 EXPORTERA MP4", open("out.mp4", "rb"), "tomingai_video.mp4")
-                        except Exception as e:
-                            st.error(f"SYSTEMFEL: {e}")
-                else: st.error("Ladda upp en bild först!")
+            if st.button("⚡ PRODUCERA VIDEO & MUSIK", key="v_btn"):
+                with st.status("AI:n bygger ditt mästerverk...") as status:
+                    # Steg 1: Skriv texten (Llama)
+                    st.write("📝 Skriver låttext...")
+                    lyrics_res = replicate.run("meta/meta-llama-3-70b-instruct", 
+                        input={"prompt": f"Skriv 4 korta rimmade rader på svenska baserat på orden: {v_input}. Svara BARA med texten."})
+                    final_lyrics = "".join(lyrics_res).replace('"', '')
+
+                    # Steg 2: Skapa Video & Musik (MiniMax)
+                    st.write("🎥 Genererar video...")
+                    v_url = str(replicate.run("minimax/video-01", input={"prompt": f"Cinematic movement, {v_stil} style", "first_frame_image": bild}))
+                    st.write("🎵 Genererar sång...")
+                    m_url = str(replicate.run("minimax/music-1.5", input={"prompt": f"{v_stil} style", "lyrics": final_lyrics}))
+                    
+                    # Steg 3: Montering
+                    with open("v.mp4", "wb") as f: f.write(requests.get(v_url).content)
+                    with open("a.mp3", "wb") as f: f.write(requests.get(m_url).content)
+                    clip = VideoFileClip("v.mp4")
+                    audio = AudioFileClip("a.mp3").set_duration(clip.duration)
+                    clip.set_audio(audio).write_videofile("out.mp4", codec="libx264", audio_codec="aac")
+                    
+                    st.video("out.mp4")
+                    st.success(f"Text som skapades: {final_lyrics}")
 
     # --- FLIK 2: BARA MUSIK ---
     with tab2:
-        st.subheader("🎸 SKAPA EN UNIK LÅT (UTAN BILD)")
         m_col1, m_col2 = st.columns(2)
         with m_col1:
-            m_genre = st.text_input("Genre & Instrument:", "Swedish Pop, Acoustic Guitar, Piano")
-            m_mood = st.select_slider("Stämning:", options=["Dramatiskt", "Lugnt", "Energiskt", "Party!"])
-            m_rost_only = st.radio("Välj röst:", ["Kvinna", "Man"], key="m_rost_only", horizontal=True)
+            m_input = st.text_input("Dina ord (t.ex. 'Blåa ögon' eller 'Snabb bil'):", "Vinterstjärna", key="m_input")
+            m_genre = st.text_input("Genre:", "Pop", key="m_genre")
         with m_col2:
-            m_lyr_only = st.text_area("Skriv din låttext (Fulla verser):", "Här i nattens ljus, bygger vi vårt hus. \nKodens starka röst, ger mitt hjärta tröst.", key="m_lyr_only")
-        
-        if st.button("🎵 GENERERA LJUDSPÅR", key="m_only_btn"):
-            with st.status("AI:N KOMPONERAR MUSIK..."):
-                try:
-                    music_res = replicate.run(
-                        "minimax/music-1.5",
-                        input={
-                            "prompt": f"{m_genre}, {m_mood} mood, {m_rost_only} vocals, studio quality",
-                            "lyrics": m_lyr_only
-                        }
-                    )
-                    st.audio(music_res.url)
-                    st.success("Ljudspåret är färdigt!")
-                    st.download_button("💾 LADDA NER MP3", requests.get(music_res.url).content, "tomingai_song.mp3")
-                except Exception as e:
-                    st.error(f"MUSIKFEL: {e}")
+            m_rost = st.radio("Röst:", ["Kvinna", "Man"], horizontal=True)
+            
+        if st.button("🎵 GENERERA LÅT", key="m_only_btn"):
+            with st.status("Komponerar låt..."):
+                # Skriv texten först
+                lyrics_res = replicate.run("meta/meta-llama-3-70b-instruct", 
+                    input={"prompt": f"Skriv en kort svensk låttext (4 rader) om: {m_input}. Svara BARA med texten."})
+                final_m_lyrics = "".join(lyrics_res).replace('"', '')
+                
+                music_res = replicate.run("minimax/music-1.5", 
+                    input={"prompt": f"{m_genre}, {m_rost} vocals", "lyrics": final_m_lyrics})
+                
+                st.audio(music_res.url)
+                st.success(f"AI:n sjöng: {final_m_lyrics}")
 
 else:
-    st.error("⚠️ ÅTKOMST NEKAD: Kontrollera REPLICATE_API_TOKEN i Secrets.")
+    st.error("Nyckel saknas i Secrets!")
+
 
 
 
