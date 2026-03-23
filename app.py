@@ -5,7 +5,7 @@ import requests
 from moviepy.editor import VideoFileClip, AudioFileClip
 
 # --- 1. SETUP & DESIGN ---
-st.set_page_config(page_title="STUDIO TOMINGAI", page_icon="⚡", layout="wide")
+st.set_page_config(page_title="TOMINGAI MEGA STUDIO", page_icon="⚡", layout="wide")
 
 st.markdown("""
     <style>
@@ -25,8 +25,24 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-st.markdown('<div class="neon-container"><p class="neon-title">TOMINGAI</p><p style="color:#00f2ff;">MEGA AI ENGINE // STABLE VERSION</p></div>', unsafe_allow_html=True)
+st.markdown('<div class="neon-container"><p class="neon-title">TOMINGAI</p><p style="color:#00f2ff;">MEGA AI ENGINE // FULL EDITION</p></div>', unsafe_allow_html=True)
 
+# HJÄLPFUNKTION FÖR ATT HÄMTA URL
+def get_url(output):
+    if isinstance(output, list): return str(output[0])
+    if hasattr(output, 'url'): return str(output.url)
+    return str(output)
+
+# --- SIDOMENY ---
+with st.sidebar:
+    st.header("🌍 Språk-Motor")
+    in_lang = st.selectbox("Jag skriver på:", ["Svenska", "English", "Español", "日本語"])
+    out_lang = st.selectbox("AI:n ska sjunga på:", ["English", "Svenska", "Español", "Français", "日本語"])
+    st.divider()
+    st.header("🎤 Röstprofil")
+    m_voice = st.radio("Välj röst:", ["Kvinna", "Man"])
+
+# Hämta API-nyckel
 if "REPLICATE_API_TOKEN" in st.secrets:
     os.environ["REPLICATE_API_TOKEN"] = st.secrets["REPLICATE_API_TOKEN"]
     api_key_found = True
@@ -38,44 +54,73 @@ if api_key_found:
 
     # --- FLIK 1: TOTAL MAGI ---
     with tab1:
-        col_in, col_out = st.columns(2)
-        with col_in:
-            m_ide = st.text_area("Beskriv din vision:", "En futuristisk stad i regn", key="m_ide")
+        col1, col2 = st.columns(2)
+        with col1:
+            m_ide = st.text_area(f"Beskriv din idé på {in_lang}:", f"En vacker natt i Tokyo", key="m_ide")
             m_stil = st.selectbox("Filmstil:", ["Cyberpunk", "Vintage 8mm", "Cinematic", "Anime"], key="m_stil")
             if st.button("🚀 SKAPA MAGI", key="m_btn"):
-                with st.status("AI-hjärnan skapar allt...") as status:
-                    # Använder namn istället för ID för att alltid få senaste versionen
-                    img_raw = replicate.run("black-forest-labs/flux-schnell", input={"prompt": f"{m_ide}, {m_stil} style"})
-                    img_url = img_raw[0] if isinstance(img_raw, list) else str(img_raw)
-                    lyrics_res = replicate.run("meta/llama-2-70b-chat", input={"prompt": f"Write 4 rhyming lines about '{m_ide}'. ONLY lyrics."})
-                    lyrics = "".join(lyrics_res).replace('"', '').strip()
-                    v_url = str(replicate.run("minimax/video-01", input={"prompt": "Cinematic movement", "first_frame_image": img_url}))
-                    m_url = str(replicate.run("facebookresearch/musicgen", input={"prompt": f"{m_stil} style", "duration": 8}))
-                    with open("v1.mp4", "wb") as f: f.write(requests.get(v_url).content)
-                    with open("a1.mp3", "wb") as f: f.write(requests.get(m_url).content)
-                    clip = VideoFileClip("v1.mp4")
-                    audio = AudioFileClip("a1.mp3").set_duration(clip.duration)
-                    clip.set_audio(audio).write_videofile("out1.mp4", codec="libx264", audio_codec="aac")
-                    with col_out:
-                        st.video("out1.mp4")
-                        st.markdown(f'<div class="lyrics-box">{lyrics}</div>', unsafe_allow_html=True)
+                with st.status(f"Producerar på {out_lang}...") as status:
+                    try:
+                        # 1. Bild
+                        img_raw = replicate.run("black-forest-labs/flux-schnell", input={"prompt": f"{m_ide}, {m_stil} style", "aspect_ratio": "16:9"})
+                        img_url = get_url(img_raw)
+                        st.image(img_url)
+                        # 2. Text
+                        lyrics_res = replicate.run("meta/llama-2-70b-chat", input={"prompt": f"Based on '{m_ide}', write 4 short rhyming lines in {out_lang}. ONLY lyrics."})
+                        lyrics = "".join(lyrics_res).replace('"', '').strip()
+                        # 3. Video & Musik
+                        v_url = get_url(replicate.run("minimax/video-01", input={"prompt": "Cinematic movement", "first_frame_image": img_url}))
+                        m_url = get_url(replicate.run("facebookresearch/musicgen", input={"prompt": f"{m_stil} style, {m_voice} vocals", "duration": 8}))
+                        # 4. Mix
+                        with open("v1.mp4", "wb") as f: f.write(requests.get(v_url).content)
+                        with open("a1.mp3", "wb") as f: f.write(requests.get(m_url).content)
+                        clip = VideoFileClip("v1.mp4")
+                        audio = AudioFileClip("a1.mp3").set_duration(clip.duration)
+                        clip.set_audio(audio).write_videofile("out1.mp4", codec="libx264", audio_codec="aac")
+                        with col2:
+                            st.video("out1.mp4")
+                            st.markdown(f'<div class="lyrics-box"><b>🎵 Sångtext ({out_lang}):</b><br><br>{lyrics.replace("\n", "<br>")}</div>', unsafe_allow_html=True)
+                    except Exception as e: st.error(f"Fel: {e}")
+
+    # --- FLIK 2: REGISSÖREN ---
+    with tab2:
+        col_r1, col_r2 = st.columns(2)
+        with col_r1:
+            bild = st.file_uploader("Ladda upp bild", type=["jpg", "png", "jpeg"], key="r_img")
+            if bild: st.image(bild, use_container_width=True)
+        with col_r2:
+            r_ide = st.text_input(f"Handling ({in_lang}):", "En sång om mig själv", key="r_ide")
+            if st.button("⚡ PRODUCERA VIDEO", key="r_btn"):
+                if bild:
+                    with st.status(f"Jobbar på {out_lang}..."):
+                        lyrics_r = "".join(replicate.run("meta/llama-2-70b-chat", input={"prompt": f"Write 4 lines in {out_lang} about '{r_ide}'."})).replace('"', '')
+                        v_r_url = get_url(replicate.run("minimax/video-01", input={"prompt": "Cinematic movement", "first_frame_image": bild}))
+                        m_r_url = get_url(replicate.run("facebookresearch/musicgen", input={"prompt": f"Cinematic, {m_voice} vocals", "duration": 8}))
+                        with open("v2.mp4", "wb") as f: f.write(requests.get(v_r_url).content)
+                        with open("a2.mp3", "wb") as f: f.write(requests.get(m_r_url).content)
+                        clip2 = VideoFileClip("v2.mp4")
+                        audio2 = AudioFileClip("a2.mp3").set_duration(clip2.duration)
+                        clip2.set_audio(audio2).write_videofile("out2.mp4", codec="libx264", audio_codec="aac")
+                        st.video("out2.mp4")
+                        st.markdown(f'<div class="lyrics-box">{lyrics_r}</div>', unsafe_allow_html=True)
 
     # --- FLIK 3: BARA MUSIK ---
     with tab3:
-        st.subheader("🎸 Skapa en unik låt")
-        mus_ide = st.text_input("Vad ska låten handla om?", "En dröm om framtiden")
-        mus_stil = st.text_input("Musikstil:", "Swedish Pop, Piano")
-        if st.button("🎵 GENERERA LÅT", key="mus_btn"):
-            with st.spinner("AI:n komponerar..."):
-                try:
-                    # FIX: Använder bara modellnamnet för MusicGen
-                    m_res = str(replicate.run("facebookresearch/musicgen", input={"prompt": mus_stil, "duration": 10}))
-                    st.audio(m_res)
-                    st.download_button("💾 LADDA NER MP3", requests.get(m_res).content, "tomingai_audio.mp3")
-                except Exception as e:
-                    st.error(f"Ett fel uppstod: {e}")
+        mus_col1, mus_col2 = st.columns(2)
+        with mus_col1:
+            mus_ide = st.text_area(f"Vad ska låten handla om? ({in_lang})", "En dröm om framtiden", key="mus_ide")
+            mus_stil = st.text_input("Musikstil:", "Swedish Pop, Piano", key="mus_stil")
+        with mus_col2:
+            if st.button("🎵 GENERERA LÅT", key="mus_btn"):
+                with st.status(f"Sjunger på {out_lang}..."):
+                    mus_lyrics_res = replicate.run("meta/llama-2-70b-chat", input={"prompt": f"Write 6 rhyming lines in {out_lang} about '{mus_ide}'."})
+                    mus_lyrics = "".join(mus_lyrics_res).replace('"', '')
+                    mus_res = get_url(replicate.run("facebookresearch/musicgen", input={"prompt": f"{mus_stil}, {m_voice} vocals", "duration": 15}))
+                    st.audio(mus_res)
+                    st.download_button("💾 LADDA NER MP3", requests.get(mus_res).content, "tomingai_song.mp3")
+                    st.success(f"Sångtext ({out_lang}): {mus_lyrics}")
 else:
-    st.error("⚠️ Kontrollera REPLICATE_API_TOKEN i Secrets.")
+    st.error("⚠️ Kontrollera Secrets.")
 
 
 
