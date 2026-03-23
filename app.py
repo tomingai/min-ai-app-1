@@ -1,6 +1,9 @@
 import streamlit as st
 import replicate
 import os
+import requests
+from moviepy.editor import VideoFileClip, AudioFileClip
+
 
 # --- 1. DESIGN & LAYOUT ---
 st.set_page_config(page_title="AI Studio Pro", page_icon="🎬", layout="wide")
