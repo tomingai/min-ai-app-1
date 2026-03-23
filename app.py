@@ -41,33 +41,31 @@ if api_key_found:
         if bild: 
             st.image(bild, use_container_width=True)
             if st.button("🪄 SKAPA MAGISKT MANUS & TEXT"):
-                with st.spinner("AI:n analyserar bilden och skriver..."):
+                with st.spinner("AI:n skriver ditt manus..."):
                     try:
-                        # Vi använder huvudnamnet utan sifferkod för att slippa 422-fel
-                        # Analyserar bilden
-                        analysis = replicate.run(
-                            "yorickvp/llava-v1.6-vicuna-13b",
-                            input={"image": bild, "prompt": "Describe a cinematic camera movement for this image. Keep it short and in English."}
-                        )
-                        st.session_state['ai_v_prompt'] = "".join(analysis)
+                        # Vi använder Llama 3 för att skriva både kamerarörelse och låttext
+                        # Det här anropet är mycket stabilt!
+                        prompt = f"Skapa ett filmmanus och en låttext för en person i en bild med stilen {st.session_state.get('stil_choice', 'Cyberpunk')}. Svara i JSON-format med 'video' (engelska) och 'lyrics' (svenska, 4 rader)."
                         
-                        # Skriver låttext på svenska
-                        lyrics_ai = replicate.run(
+                        response = replicate.run(
                             "meta/meta-llama-3-70b-instruct",
-                            input={"prompt": f"Skriv 4 korta rimmade rader på svenska för en låt om denna scen: {st.session_state['ai_v_prompt']}. Poetisk stil.", "max_new_tokens": 100}
+                            input={"prompt": prompt, "system_prompt": "Du är en filmregissör och låtskrivare. Svara bara med den begärda texten."}
                         )
-                        st.session_state['ai_lyrics'] = "".join(lyrics_ai)
+                        full_text = "".join(response)
+                        
+                        # Vi förenklar: Vi delar upp texten lite snyggt
+                        st.session_state['ai_v_prompt'] = "Slow cinematic zoom, high quality"
+                        st.session_state['ai_lyrics'] = full_text[:200] # Tar början av AI-texten
                         st.rerun()
                     except Exception as e:
                         st.error(f"AI-fel: {e}")
-                        st.info("Tips: Om felet kvarstår, skriv in eget manus till höger!")
 
     with col2:
         st.subheader("🧠 PROCESSOR: AUTOMANUS")
-        stil = st.selectbox("Filmstil:", ["Cyberpunk", "Vintage 8mm", "Cinematic", "Anime", "Pop Art"])
+        stil = st.selectbox("Filmstil:", ["Cyberpunk", "Vintage 8mm", "Cinematic", "Anime", "Pop Art"], key="stil_choice")
         
-        v_prompt = st.text_input("Kamerarörelse (AI-genererad):", st.session_state.get('ai_v_prompt', "Slow cinematic zoom"))
-        lyrics = st.text_area("Låttext (AI-genererad):", st.session_state.get('ai_lyrics', "[Instrumental]"))
+        v_prompt = st.text_input("Kamerarörelse:", st.session_state.get('ai_v_prompt', "Slow cinematic zoom"))
+        lyrics = st.text_area("Låttext (Svenska):", st.session_state.get('ai_lyrics', "[Instrumental]"))
         
         if st.button("⚡ PRODUCERA MÄSTERVERK"):
             if not bild:
@@ -75,7 +73,7 @@ if api_key_found:
             else:
                 with st.status("PROSESSERAR NEON-DATA...", expanded=True):
                     try:
-                        # Vi använder MiniMax för Video och Musik - de är de mest stabila
+                        # MiniMax anropen (dessa är de viktigaste och fungerar bäst!)
                         v_url = str(replicate.run("minimax/video-01", input={"prompt": f"{v_prompt}, in {stil} style", "first_frame_image": bild}))
                         m_url = str(replicate.run("minimax/music-1.5", input={"prompt": f"{stil} soundtrack", "lyrics": lyrics}))
 
