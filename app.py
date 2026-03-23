@@ -31,6 +31,12 @@ st.markdown("""
 
 st.markdown('<div class="neon-container"><p class="neon-title">TOMINGAI</p><p style="color:#00f2ff; letter-spacing:10px; margin-top:20px;">GLOBAL AI ENGINE // TRIPLE MODE</p></div>', unsafe_allow_html=True)
 
+# HJÄLPFUNKTION FÖR ATT EXTRAHERA URL:er (Fixar kraschen)
+def get_url(output):
+    if isinstance(output, list): return output[0]
+    if hasattr(output, 'url'): return output.url
+    return str(output)
+
 with st.sidebar:
     st.header("🌍 Språk-Motor")
     in_lang = st.selectbox("Jag skriver på:", ["Svenska", "English", "Español", "Français", "日本語", "Deutsch"])
@@ -56,19 +62,23 @@ if api_key_found:
         with col2:
             if st.button("🚀 SKAPA MAGI", key="m_btn"):
                 with st.status(f"Producerar på {out_lang}...") as status:
-                    # FIX: Vi ser till att img_url blir en ren text-sträng (URL)
-                    img_output = replicate.run("black-forest-labs/flux-schnell", input={"prompt": f"{m_ide}, {m_stil} style", "aspect_ratio": "16:9"})
-                    img_url = img_output[0] if isinstance(img_output, list) else str(img_output)
+                    # 1. RITA BILD (Med URL-fix)
+                    img_raw = replicate.run("black-forest-labs/flux-schnell", input={"prompt": f"{m_ide}, {m_stil} style", "aspect_ratio": "16:9"})
+                    img_url = get_url(img_raw)
                     st.image(img_url, caption="AI-genererad scen")
                     
-                    lyrics = "".join(replicate.run("meta/meta-llama-3-70b-instruct", input={"prompt": f"Based on '{m_ide}', write 4 short rhyming lines in {out_lang}. ONLY lyrics."})).replace('"', '')
+                    # 2. SKRIV TEXT
+                    lyrics_res = replicate.run("meta/meta-llama-3-70b-instruct", input={"prompt": f"Write 4 rhyming lines in {out_lang} about '{m_ide}'. ONLY lyrics."})
+                    lyrics = "".join(lyrics_res).replace('"', '')
                     
-                    v_url_res = replicate.run("minimax/video-01", input={"prompt": "Cinematic movement", "first_frame_image": img_url})
-                    v_url = v_url_res[0] if isinstance(v_url_res, list) else str(v_url_res)
+                    # 3. GENERERA VIDEO & MUSIK (Med URL-fix)
+                    v_raw = replicate.run("minimax/video-01", input={"prompt": "Cinematic movement", "first_frame_image": img_url})
+                    v_url = get_url(v_raw)
                     
-                    m_url_res = replicate.run("minimax/music-1.5", input={"prompt": f"{m_stil} style, {m_voice} vocals", "lyrics": lyrics})
-                    m_url = m_url_res.url if hasattr(m_url_res, 'url') else str(m_url_res)
+                    m_raw = replicate.run("minimax/music-1.5", input={"prompt": f"{m_stil} style, {m_voice} vocals", "lyrics": lyrics})
+                    m_url = get_url(m_raw)
                     
+                    # 4. MONTERING
                     with open("v1.mp4", "wb") as f: f.write(requests.get(v_url).content)
                     with open("a1.mp3", "wb") as f: f.write(requests.get(m_url).content)
                     clip = VideoFileClip("v1.mp4")
@@ -76,8 +86,7 @@ if api_key_found:
                     clip.set_audio(audio).write_videofile("out1.mp4", codec="libx264", audio_codec="aac")
                     
                     st.video("out1.mp4")
-                    with open("out1.mp4", "rb") as f:
-                        st.download_button("💾 LADDA NER VIDEO", f, "tomingai_magic.mp4")
+                    st.download_button("💾 EXPORTERA", open("out1.mp4", "rb"), "tomingai_magic.mp4")
 
     with tab2:
         col1, col2 = st.columns(2)
@@ -88,12 +97,12 @@ if api_key_found:
             r_ide = st.text_input(f"Handling ({in_lang}):", "En sång om mig", key="r_ide")
             if st.button("⚡ PRODUCERA", key="r_btn"):
                 if bild:
-                    with st.status(f"Jobbar..."):
+                    with st.status("Jobbar..."):
                         lyrics = "".join(replicate.run("meta/meta-llama-3-70b-instruct", input={"prompt": f"Write 4 lines in {out_lang} about '{r_ide}'."})).replace('"', '')
-                        v_res = replicate.run("minimax/video-01", input={"prompt": "Cinematic movement", "first_frame_image": bild})
-                        v_url = v_res[0] if isinstance(v_res, list) else str(v_res)
-                        m_res = replicate.run("minimax/music-1.5", input={"prompt": f"Cinematic, {m_voice} vocals", "lyrics": lyrics})
-                        m_url = m_res.url if hasattr(m_res, 'url') else str(m_res)
+                        v_raw = replicate.run("minimax/video-01", input={"prompt": "Cinematic movement", "first_frame_image": bild})
+                        v_url = get_url(v_raw)
+                        m_raw = replicate.run("minimax/music-1.5", input={"prompt": f"Cinematic, {m_voice} vocals", "lyrics": lyrics})
+                        m_url = get_url(m_raw)
                         with open("v2.mp4", "wb") as f: f.write(requests.get(v_url).content)
                         with open("a2.mp3", "wb") as f: f.write(requests.get(m_url).content)
                         clip = VideoFileClip("v2.mp4")
@@ -106,8 +115,8 @@ if api_key_found:
         st.subheader("🎸 Skapa musik")
         if st.button("🎵 GENERERA LÅT", key="mus_btn"):
             with st.status("Komponerar..."):
-                mus_res = replicate.run("minimax/music-1.5", input={"prompt": "Pop", "lyrics": "Test lyrics"})
-                st.audio(mus_res.url if hasattr(mus_res, 'url') else str(mus_res))
+                m_raw = replicate.run("minimax/music-1.5", input={"prompt": "Pop", "lyrics": "Test lyrics"})
+                st.audio(get_url(m_raw))
 
 else:
     st.error("⚠️ Kontrollera Secrets.")
