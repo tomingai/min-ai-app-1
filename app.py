@@ -7,13 +7,10 @@ from moviepy.editor import VideoFileClip, AudioFileClip
 # --- 1. SETUP & FUTURISTISK DESIGN ---
 st.set_page_config(page_title="TOMINGAI NEON STUDIO", page_icon="⚡", layout="wide")
 
-# NEON CSS STYLING
+# NEON CSS STYLING (Håller kvar din snygga look)
 st.markdown("""
     <style>
-    /* Bakgrund och huvudcontainer */
     .main { background-color: #050505; }
-    
-    /* Neon Logotyp */
     .neon-wrapper {
         background-color: #0a0a0a;
         padding: 30px;
@@ -38,15 +35,13 @@ st.markdown("""
         text-transform: uppercase;
         margin-top: 10px;
     }
-    
-    /* Neon Knappar */
     .stButton>button {
         background-color: transparent;
         color: #00f2ff;
         border: 2px solid #00f2ff;
         border-radius: 5px;
         font-weight: bold;
-        transition: 0.3s;
+        width: 100%;
     }
     .stButton>button:hover {
         background-color: #00f2ff;
@@ -56,16 +51,9 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# Visa den futuristiska logotypen
-st.markdown("""
-    <div class="neon-wrapper">
-        <p class="neon-text">TOMINGAI</p>
-        <p class="neon-sub">A.I. NEON ENGINE // VERSION 2.0</p>
-    </div>
-    """, unsafe_allow_html=True)
+st.markdown('<div class="neon-wrapper"><p class="neon-text">TOMINGAI</p><p class="neon-sub">A.I. NEON ENGINE // MUSIC & VIDEO</p></div>', unsafe_allow_html=True)
 
-# --- 2. LOGIK ---
-# Hämta API-nyckeln automatiskt från Streamlit Secrets
+# Hämta API-nyckeln från Secrets
 if "REPLICATE_API_TOKEN" in st.secrets:
     os.environ["REPLICATE_API_TOKEN"] = st.secrets["REPLICATE_API_TOKEN"]
     api_key_found = True
@@ -77,37 +65,48 @@ if api_key_found:
     
     with col1:
         st.subheader("📡 DATAKÄLLA: BILD")
-        bild = st.file_uploader("Ladda upp bild", type=["jpg", "png", "jpeg"])
+        bild = st.file_uploader("Ladda upp din startbild", type=["jpg", "png", "jpeg"])
         if bild: 
             st.image(bild, use_container_width=True)
 
     with col2:
-        st.subheader("🧠 PROCESSOR: STIL")
-        stil = st.selectbox("Välj tema:", ["Cyberpunk", "Cinematic", "Vintage 8mm", "Anime", "Dreamy Jazz"])
-        rorelse = st.radio("Välj kamerarörelse:", [
+        st.subheader("🧠 PROCESSOR: MANUS & SÅNG")
+        stil = st.selectbox("Välj musikstil/tema:", ["Cyberpunk", "Pop", "Jazz", "Epic Orchestral", "Hip Hop"])
+        
+        # NYTT: Här kan du skriva in text som AI:n ska sjunga!
+        lyrics = st.text_area("Skriv din låttext här (för sång):", "[Instrumental]", help="Skriv [Instrumental] för bara musik, eller skriv text för att AI:n ska sjunga!")
+        
+        rorelse = st.radio("Kamerarörelse:", [
             "Slow cinematic zoom in on face", 
             "Slow pan from left to right", 
-            "The person is smiling and blinking",
-            "Atmospheric slow motion with particles"
+            "The person is smiling and blinking"
         ])
         
-        if st.button("⚡ INITIALISERA GENERERING"):
+        if st.button("⚡ INITIALISERA FULL PRODUKTION"):
             if not bild:
-                st.error("SYSTEMFEL: Ingen bild hittades!")
+                st.error("Ladda upp en bild först!")
             else:
                 with st.status("PROSESSERAR NEON-DATA...", expanded=True):
                     try:
-                        # Video & Musik (MiniMax)
+                        # 1. Skapa Video (MiniMax)
+                        st.write("🎥 Genererar video...")
                         v_url = str(replicate.run(
                             "minimax/video-01", 
                             input={"prompt": f"{rorelse}, {stil} style", "first_frame_image": bild}
                         ))
+
+                        # 2. Skapa Musik/Sång (MiniMax Music-1.5)
+                        st.write("🎵 Komponerar musik och sång...")
                         m_url = str(replicate.run(
                             "minimax/music-1.5", 
-                            input={"prompt": f"{stil} soundtrack", "lyrics": "[Instrumental]"}
+                            input={
+                                "prompt": f"{stil} style, high quality", 
+                                "lyrics": lyrics
+                            }
                         ))
 
-                        # Montering
+                        # 3. Montering (Auto-Edit)
+                        st.write("✂️ Synkar ljud och bild...")
                         with open("v.mp4", "wb") as f: f.write(requests.get(v_url).content)
                         with open("a.mp3", "wb") as f: f.write(requests.get(m_url).content)
                         
@@ -117,11 +116,14 @@ if api_key_found:
                         
                         st.video("out.mp4")
                         with open("out.mp4", "rb") as f:
-                            st.download_button("💾 EXPORTERA FIL", f, "ai_neon_film.mp4")
+                            st.download_button("💾 EXPORTERA MÄSTERVERK", f, "tomingai_ai_video.mp4")
+                        
+                        st.success("SYNCHRONIZATION COMPLETE.")
                     except Exception as e:
                         st.error(f"SYSTEMFEL: {e}")
 else:
     st.error("⚠️ ÅTKOMST NEKAD: Lägg till REPLICATE_API_TOKEN i Streamlit Secrets.")
+
 
 
 
