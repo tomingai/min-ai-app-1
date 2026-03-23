@@ -44,7 +44,7 @@ else:
 if api_key_found:
     tab1, tab2, tab3 = st.tabs(["🪄 TOTAL MAGI", "🎬 REGISSÖREN", "🎧 BARA MUSIK"])
 
-    # --- FLIK 1: TOTAL MAGI (AI ritar bilden åt dig) ---
+    # --- FLIK 1: TOTAL MAGI ---
     with tab1:
         col_in, col_out = st.columns(2)
         with col_in:
@@ -53,16 +53,12 @@ if api_key_found:
             m_stil = st.selectbox("Filmstil:", ["Cyberpunk", "Vintage 8mm", "Cinematic", "Anime"], key="m_stil")
             if st.button("🚀 SKAPA MAGI", key="m_btn"):
                 with st.status("AI-hjärnan skapar allt...") as status:
-                    # 1. RITA BILD
                     img_raw = replicate.run("black-forest-labs/flux-schnell", input={"prompt": f"{m_ide}, {m_stil} style", "aspect_ratio": "16:9"})
-                    img_url = img_raw[0] if isinstance(img_raw, list) else str(img_raw)
-                    # 2. SKRIV TEXT
+                    img_url = img_raw if isinstance(img_raw, list) else str(img_raw)
                     lyrics_res = replicate.run("meta/llama-2-70b-chat", input={"prompt": f"Write 4 rhyming lines in {out_lang} about '{m_ide}'. ONLY lyrics."})
                     lyrics = "".join(lyrics_res).replace('"', '').strip()
-                    # 3. VIDEO & MUSIK
                     v_url = str(replicate.run("minimax/video-01", input={"prompt": "Cinematic movement", "first_frame_image": img_url}))
                     m_url = str(replicate.run("facebookresearch/musicgen:7b3212fb7983471439735c0529d06634", input={"prompt": f"{m_stil} style, {m_voice} vocals", "duration": 8}))
-                    # 4. MIX
                     with open("v1.mp4", "wb") as f: f.write(requests.get(v_url).content)
                     with open("a1.mp3", "wb") as f: f.write(requests.get(m_url).content)
                     clip = VideoFileClip("v1.mp4")
@@ -72,7 +68,7 @@ if api_key_found:
                         st.video("out1.mp4")
                         st.markdown(f'<div class="lyrics-box"><b>🎵 Sångtext ({out_lang}):</b><br><br>{lyrics.replace("\n", "<br>")}</div>', unsafe_allow_html=True)
 
-    # --- FLIK 2: REGISSÖREN (Du laddar upp bilden) ---
+    # --- FLIK 2: REGISSÖREN ---
     with tab2:
         col_r1, col_r2 = st.columns(2)
         with col_r1:
@@ -98,9 +94,9 @@ if api_key_found:
                         st.markdown(f'<div class="lyrics-box"><b>🎵 Sångtext:</b><br>{lyrics_r}</div>', unsafe_allow_html=True)
                 else: st.error("Du måste ladda upp en bild först!")
 
-    # --- FLIK 3: BARA MUSIK (Ren ljudfil) ---
+    # --- FLIK 3: BARA MUSIK ---
     with tab3:
-        st.subheader("🎸 Skapa en unik låt (utan bild)")
+        st.subheader("🎸 Skapa en unik låt")
         m_col1, m_col2 = st.columns(2)
         with m_col1:
             mus_ide = st.text_area(f"Beskriv låtens handling ({in_lang}):", "En dröm om framtiden", key="mus_ide")
@@ -115,6 +111,7 @@ if api_key_found:
                     st.success(f"Sångtext ({out_lang}): {mus_lyrics}")
 else:
     st.error("⚠️ Kontrollera REPLICATE_API_TOKEN i Secrets.")
+
 
 
 
