@@ -29,7 +29,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-st.markdown('<div class="neon-container"><p class="neon-title">TOMINGAI</p><p style="color:#00f2ff; letter-spacing:10px; margin-top:20px;">GLOBAL AI ENGINE // TRIPLE MODE</p></div>', unsafe_allow_html=True)
+st.markdown('<div class="neon-container"><p class="neon-title">TOMINGAI</p><p style="color:#00f2ff; letter-spacing:10px; margin-top:20px;">GLOBAL AI ENGINE // MASTER STUDIO</p></div>', unsafe_allow_html=True)
 
 # HJÄLPFUNKTION FÖR ATT HÄMTA REN URL
 def get_url(output):
@@ -67,8 +67,8 @@ if api_key_found:
                     img_raw = replicate.run("black-forest-labs/flux-schnell", input={"prompt": f"{m_ide}, {m_stil} style", "aspect_ratio": "16:9"})
                     img_url = get_url(img_raw)
                     st.image(img_url, caption="AI-genererad scen")
-                    # 2. SKRIV TEXT
-                    lyrics_res = replicate.run("meta/meta-llama-3.1-405b-instruct", input={"prompt": f"Write 4 short rhyming lines in {out_lang} about '{m_ide}'. ONLY lyrics."})
+                    # 2. SKRIV TEXT (Bytt till stabil Llama 3)
+                    lyrics_res = replicate.run("meta/llama-2-70b-chat", input={"prompt": f"Write 4 short rhyming lines in {out_lang} about '{m_ide}'. ONLY lyrics, no extra talk."})
                     lyrics = "".join(lyrics_res).replace('"', '')
                     # 3. VIDEO & MUSIK
                     v_raw = replicate.run("minimax/video-01", input={"prompt": "Cinematic movement", "first_frame_image": img_url})
@@ -95,7 +95,7 @@ if api_key_found:
             if st.button("⚡ PRODUCERA", key="r_btn"):
                 if bild:
                     with st.status(f"Jobbar på {out_lang}..."):
-                        lyrics_r = "".join(replicate.run("meta/meta-llama-3.1-405b-instruct", input={"prompt": f"Write 4 rhyming lines in {out_lang} about '{r_ide}'."})).replace('"', '')
+                        lyrics_r = "".join(replicate.run("meta/llama-2-70b-chat", input={"prompt": f"Write 4 lines in {out_lang} about '{r_ide}'."})).replace('"', '')
                         v_r_raw = replicate.run("minimax/video-01", input={"prompt": "Cinematic movement", "first_frame_image": bild})
                         v_r_url = get_url(v_r_raw)
                         m_r_raw = replicate.run("minimax/music-1.5", input={"prompt": f"{r_stil_regi} style, {m_voice} vocals", "lyrics": lyrics_r})
@@ -117,13 +117,16 @@ if api_key_found:
         with mus_col2:
             if st.button("🎵 GENERERA LÅT", key="mus_btn"):
                 with st.status(f"Sjunger på {out_lang}..."):
-                    mus_lyrics = "".join(replicate.run("meta/meta-llama-3.1-405b-instruct", input={"prompt": f"Write 6 rhyming lines in {out_lang} about '{mus_ide}'."})).replace('"', '')
+                    # FIX: Använder stabil Llama 2 för texten
+                    mus_lyrics_res = replicate.run("meta/llama-2-70b-chat", input={"prompt": f"Write 6 rhyming lines in {out_lang} about '{mus_ide}'. ONLY lyrics."})
+                    mus_lyrics = "".join(mus_lyrics_res).replace('"', '')
                     mus_res = replicate.run("minimax/music-1.5", input={"prompt": f"{mus_stil}, {m_voice} vocals", "lyrics": mus_lyrics})
                     st.audio(get_url(mus_res))
                     st.success(f"Sångtext ({out_lang}): {mus_lyrics}")
 
 else:
     st.error("⚠️ Kontrollera REPLICATE_API_TOKEN i Secrets.")
+
 
 
 
