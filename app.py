@@ -22,16 +22,9 @@ st.markdown("""
         line-height: 1; margin: 0;
         text-shadow: 0 0 10px #fff, 0 0 40px #00f2ff, 0 0 80px #00f2ff;
     }
-    .stTabs [data-baseweb="tab-list"] { gap: 10px; justify-content: center; }
-    .stTabs [data-baseweb="tab"] {
-        height: auto; white-space: normal; padding: 10px 20px;
-        min-width: 150px; background-color: #111; color: #eee; border-radius: 10px 10px 0 0;
-    }
+    .stTabs [data-baseweb="tab"] { height: auto; white-space: normal; padding: 10px 20px; background-color: #111; color: #eee; border-radius: 10px 10px 0 0; }
     .stTabs [aria-selected="true"] { background-color: #00f2ff !important; color: black !important; font-weight: bold; }
-    .stButton>button {
-        background-color: transparent; color: #00f2ff; border: 2px solid #00f2ff;
-        width: 100%; font-weight: bold; border-radius: 8px;
-    }
+    .stButton>button { background-color: transparent; color: #00f2ff; border: 2px solid #00f2ff; width: 100%; font-weight: bold; border-radius: 8px; }
     .stButton>button:hover { background-color: #00f2ff; color: black; box-shadow: 0px 0px 20px #00f2ff; }
     </style>
     """, unsafe_allow_html=True)
@@ -65,10 +58,10 @@ if api_key_found:
         with col2:
             if st.button("🚀 SKAPA MAGI", key="m_btn"):
                 with st.status(f"Producerar på {out_lang}...") as status:
-                    # FIX: Hantera FLUX bild-output korrekt
+                    # FIX: Plocka ut första länken ur listan från FLUX för att undvika AttributeError
                     img_output = replicate.run("black-forest-labs/flux-schnell", input={"prompt": f"{m_ide}, {m_stil} style", "aspect_ratio": "16:9"})
                     img_url = img_output[0] if isinstance(img_output, list) else img_output
-                    st.image(img_url)
+                    st.image(img_url, caption="AI-genererad scen")
                     
                     lyrics = "".join(replicate.run("meta/meta-llama-3-70b-instruct", input={"prompt": f"Based on '{m_ide}', write 4 short rhyming lines in {out_lang}. ONLY lyrics."})).replace('"', '')
                     v_url = str(replicate.run("minimax/video-01", input={"prompt": "Cinematic movement", "first_frame_image": img_url}))
@@ -123,6 +116,7 @@ if api_key_found:
 
 else:
     st.error("⚠️ Kontrollera REPLICATE_API_TOKEN i Secrets.")
+
 
 
 
