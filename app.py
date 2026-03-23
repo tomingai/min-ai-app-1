@@ -9,6 +9,7 @@ st.title("🎬 AI Director Studio: Manus & Stil")
 
 with st.sidebar:
     st.header("⚙️ Inställningar")
+    # Tips: Sen kan vi gömma denna nyckel i Streamlit Secrets
     api_key = st.text_input("Replicate API-nyckel:", type="password")
     st.divider()
     stil = st.selectbox("Välj tema:", ["Cinematic", "Cyberpunk", "Vintage 8mm", "Anime", "Horror", "Dreamy Jazz"])
@@ -24,17 +25,19 @@ if api_key:
             if st.button("🪄 Skapa magiskt manus"):
                 with st.spinner("AI:n analyserar din bild..."):
                     try:
-                        # Vi använder moondream2 - den är blixtsnabb och stabil!
-                        analysis = replicate.run(
-                            "lucataco/moondream2:6108f974860f4e164223298cf085b306b3a0e6983802e3b2e04332468205f037",
+                        # Vi använder ett 'unversioned' anrop som alltid tar senaste stabila
+                        # Detta är det säkraste sättet att undvika 422-fel
+                        output = replicate.run(
+                            "lucataco/moondream2",
                             input={"image": bild, "prompt": "Describe this person and the scene briefly for a movie script."}
                         )
-                        beskrivning = "".join(analysis)
-                        st.session_state['v_prompt'] = f"{beskrivning}. Cinematic camera movement, {stil} style."
-                        st.session_state['m_prompt'] = f"{stil} music soundtrack, high quality"
+                        beskrivning = "".join(output)
+                        st.session_state['v_prompt'] = f"{beskrivning}. Cinematic movement, {stil} style."
+                        st.session_state['m_prompt'] = f"{stil} music soundtrack"
                         st.rerun()
                     except Exception as e:
                         st.error(f"Analys-fel: {e}")
+                        st.info("Prova att skriva ett eget manus i rutan till höger istället!")
 
     with col2:
         st.subheader("2. Regissörens manus")
@@ -42,27 +45,31 @@ if api_key:
         m_p = st.text_input("Musiken ska vara:", st.session_state.get('m_prompt', "Cinematic ambient"))
         
         if st.button("🚀 PRODUCERA FILMEN"):
-            with st.status("Producerar din film...", expanded=True):
-                try:
-                    # Video & Musik med MiniMax
-                    v_url = str(replicate.run("minimax/video-01", input={"prompt": v_p, "first_frame_image": bild}))
-                    m_url = str(replicate.run("minimax/music-1.5", input={"prompt": m_p, "lyrics": "[Instrumental]"}))
+            if not bild:
+                st.error("Du måste ladda upp en bild först!")
+            else:
+                with st.status("Producerar din film...", expanded=True):
+                    try:
+                        # Video & Musik med MiniMax (våra mest stabila modeller)
+                        v_url = str(replicate.run("minimax/video-01", input={"prompt": v_p, "first_frame_image": bild}))
+                        m_url = str(replicate.run("minimax/music-1.5", input={"prompt": m_p, "lyrics": "[Instrumental]"}))
 
-                    # Montering
-                    with open("v.mp4", "wb") as f: f.write(requests.get(v_url).content)
-                    with open("a.mp3", "wb") as f: f.write(requests.get(m_url).content)
-                    
-                    clip = VideoFileClip("v.mp4")
-                    audio = AudioFileClip("a.mp3").set_duration(clip.duration)
-                    clip.set_audio(audio).write_videofile("out.mp4", codec="libx264", audio_codec="aac")
-                    
-                    st.video("out.mp4")
-                    with open("out.mp4", "rb") as f:
-                        st.download_button("💾 LADDA NER", f, "ai_video.mp4")
-                except Exception as e:
-                    st.error(f"Produktions-fel: {e}")
+                        # Montering
+                        with open("v.mp4", "wb") as f: f.write(requests.get(v_url).content)
+                        with open("a.mp3", "wb") as f: f.write(requests.get(m_url).content)
+                        
+                        clip = VideoFileClip("v.mp4")
+                        audio = AudioFileClip("a.mp3").set_duration(clip.duration)
+                        clip.set_audio(audio).write_videofile("out.mp4", codec="libx264", audio_codec="aac")
+                        
+                        st.video("out.mp4")
+                        with open("out.mp4", "rb") as f:
+                            st.download_button("💾 LADDA NER", f, "ai_video.mp4")
+                    except Exception as e:
+                        st.error(f"Produktions-fel: {e}")
 else:
     st.info("Klistra in din API-nyckel i sidomenyn!")
+
 
 
 
