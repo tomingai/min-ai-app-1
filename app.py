@@ -31,7 +31,6 @@ st.markdown("""
 
 st.markdown('<div class="neon-container"><p class="neon-title">TOMINGAI</p><p style="color:#00f2ff; letter-spacing:10px; margin-top:20px;">GLOBAL AI ENGINE // TRIPLE MODE</p></div>', unsafe_allow_html=True)
 
-# --- SIDOMENY ---
 with st.sidebar:
     st.header("🌍 Språk-Motor")
     in_lang = st.selectbox("Jag skriver på:", ["Svenska", "English", "Español", "Français", "日本語", "Deutsch"])
@@ -49,7 +48,6 @@ else:
 if api_key_found:
     tab1, tab2, tab3 = st.tabs(["🪄 TOTAL MAGI", "🎬 REGISSÖREN", "🎧 BARA MUSIK"])
 
-    # --- FLIK 1: TOTAL MAGI ---
     with tab1:
         col1, col2 = st.columns(2)
         with col1:
@@ -58,14 +56,18 @@ if api_key_found:
         with col2:
             if st.button("🚀 SKAPA MAGI", key="m_btn"):
                 with st.status(f"Producerar på {out_lang}...") as status:
-                    # FIX: Plocka ut första länken ur listan från FLUX för att undvika AttributeError
+                    # FIX: Vi ser till att img_url blir en ren text-sträng (URL)
                     img_output = replicate.run("black-forest-labs/flux-schnell", input={"prompt": f"{m_ide}, {m_stil} style", "aspect_ratio": "16:9"})
-                    img_url = img_output[0] if isinstance(img_output, list) else img_output
+                    img_url = img_output[0] if isinstance(img_output, list) else str(img_output)
                     st.image(img_url, caption="AI-genererad scen")
                     
                     lyrics = "".join(replicate.run("meta/meta-llama-3-70b-instruct", input={"prompt": f"Based on '{m_ide}', write 4 short rhyming lines in {out_lang}. ONLY lyrics."})).replace('"', '')
-                    v_url = str(replicate.run("minimax/video-01", input={"prompt": "Cinematic movement", "first_frame_image": img_url}))
-                    m_url = str(replicate.run("minimax/music-1.5", input={"prompt": f"{m_stil} style, {m_voice} vocals", "lyrics": lyrics}))
+                    
+                    v_url_res = replicate.run("minimax/video-01", input={"prompt": "Cinematic movement", "first_frame_image": img_url})
+                    v_url = v_url_res[0] if isinstance(v_url_res, list) else str(v_url_res)
+                    
+                    m_url_res = replicate.run("minimax/music-1.5", input={"prompt": f"{m_stil} style, {m_voice} vocals", "lyrics": lyrics})
+                    m_url = m_url_res.url if hasattr(m_url_res, 'url') else str(m_url_res)
                     
                     with open("v1.mp4", "wb") as f: f.write(requests.get(v_url).content)
                     with open("a1.mp3", "wb") as f: f.write(requests.get(m_url).content)
@@ -77,45 +79,39 @@ if api_key_found:
                     with open("out1.mp4", "rb") as f:
                         st.download_button("💾 LADDA NER VIDEO", f, "tomingai_magic.mp4")
 
-    # --- FLIK 2: REGISSÖREN ---
     with tab2:
         col1, col2 = st.columns(2)
         with col1:
-            bild = st.file_uploader("Ladda upp egen bild", type=["jpg", "png", "jpeg"], key="r_img")
+            bild = st.file_uploader("Ladda upp bild", type=["jpg", "png", "jpeg"], key="r_img")
             if bild: st.image(bild, use_container_width=True)
         with col2:
-            r_ide = st.text_input(f"Låtens handling ({in_lang}):", "En sång om mig själv", key="r_ide")
+            r_ide = st.text_input(f"Handling ({in_lang}):", "En sång om mig", key="r_ide")
             if st.button("⚡ PRODUCERA", key="r_btn"):
                 if bild:
-                    with st.status(f"Jobbar på {out_lang}..."):
-                        lyrics = "".join(replicate.run("meta/meta-llama-3-70b-instruct", input={"prompt": f"Write 4 rhyming lines in {out_lang} about '{r_ide}'."})).replace('"', '')
-                        v_url = str(replicate.run("minimax/video-01", input={"prompt": "Cinematic movement", "first_frame_image": bild}))
-                        m_url = str(replicate.run("minimax/music-1.5", input={"prompt": f"Cinematic style, {m_voice} vocals", "lyrics": lyrics}))
+                    with st.status(f"Jobbar..."):
+                        lyrics = "".join(replicate.run("meta/meta-llama-3-70b-instruct", input={"prompt": f"Write 4 lines in {out_lang} about '{r_ide}'."})).replace('"', '')
+                        v_res = replicate.run("minimax/video-01", input={"prompt": "Cinematic movement", "first_frame_image": bild})
+                        v_url = v_res[0] if isinstance(v_res, list) else str(v_res)
+                        m_res = replicate.run("minimax/music-1.5", input={"prompt": f"Cinematic, {m_voice} vocals", "lyrics": lyrics})
+                        m_url = m_res.url if hasattr(m_res, 'url') else str(m_res)
                         with open("v2.mp4", "wb") as f: f.write(requests.get(v_url).content)
                         with open("a2.mp3", "wb") as f: f.write(requests.get(m_url).content)
                         clip = VideoFileClip("v2.mp4")
                         audio = AudioFileClip("a2.mp3").set_duration(clip.duration)
                         clip.set_audio(audio).write_videofile("out2.mp4", codec="libx264", audio_codec="aac")
                         st.video("out2.mp4")
-                        with open("out2.mp4", "rb") as f:
-                            st.download_button("💾 LADDA NER VIDEO", f, "tomingai_director.mp4")
-                else: st.error("Ladda upp en bild!")
+                else: st.error("Ladda upp bild!")
 
-    # --- FLIK 3: BARA MUSIK ---
     with tab3:
-        mus_col1, mus_col2 = st.columns(2)
-        with mus_col1:
-            mus_ide = st.text_area(f"Låtens handling ({in_lang}):", "En dröm om framtiden", key="mus_ide")
-        with mus_col2:
-            if st.button("🎵 GENERERA LÅT", key="mus_btn"):
-                with st.status(f"Sjunger på {out_lang}..."):
-                    mus_lyrics = "".join(replicate.run("meta/meta-llama-3-70b-instruct", input={"prompt": f"Write 6 rhyming lines in {out_lang} about '{mus_ide}'."})).replace('"', '')
-                    mus_res = replicate.run("minimax/music-1.5", input={"prompt": f"Studio quality, {m_voice} vocals", "lyrics": mus_lyrics})
-                    st.audio(mus_res.url)
-                    st.download_button("💾 LADDA NER MP3", requests.get(mus_res.url).content, "tomingai_song.mp3")
+        st.subheader("🎸 Skapa musik")
+        if st.button("🎵 GENERERA LÅT", key="mus_btn"):
+            with st.status("Komponerar..."):
+                mus_res = replicate.run("minimax/music-1.5", input={"prompt": "Pop", "lyrics": "Test lyrics"})
+                st.audio(mus_res.url if hasattr(mus_res, 'url') else str(mus_res))
 
 else:
-    st.error("⚠️ Kontrollera REPLICATE_API_TOKEN i Secrets.")
+    st.error("⚠️ Kontrollera Secrets.")
+
 
 
 
