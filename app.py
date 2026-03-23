@@ -4,7 +4,7 @@ import os
 import requests
 from moviepy.editor import VideoFileClip, AudioFileClip
 
-# --- 1. SETUP & DESIGN ---
+# --- 1. SETUP & ULTRA-CLEAR NEON DESIGN ---
 st.set_page_config(page_title="TOMINGAI MEGA STUDIO", page_icon="⚡", layout="wide")
 
 st.markdown("""
@@ -33,10 +33,8 @@ st.markdown('<div class="neon-container"><p class="neon-title">TOMINGAI</p><p st
 
 # HJÄLPFUNKTION FÖR ATT HÄMTA REN URL
 def get_url(output):
-    if isinstance(output, list):
-        return str(output[0])
-    if hasattr(output, 'url'):
-        return str(output.url)
+    if isinstance(output, list): return str(output[0])
+    if hasattr(output, 'url'): return str(output.url)
     return str(output)
 
 with st.sidebar:
@@ -56,6 +54,7 @@ else:
 if api_key_found:
     tab1, tab2, tab3 = st.tabs(["🪄 TOTAL MAGI", "🎬 REGISSÖREN", "🎧 BARA MUSIK"])
 
+    # --- FLIK 1: TOTAL MAGI ---
     with tab1:
         col1, col2 = st.columns(2)
         with col1:
@@ -64,41 +63,67 @@ if api_key_found:
         with col2:
             if st.button("🚀 SKAPA MAGI", key="m_btn"):
                 with st.status(f"Producerar på {out_lang}...") as status:
-                    # 1. RITA BILD (FLUX)
+                    # 1. RITA BILD
                     img_raw = replicate.run("black-forest-labs/flux-schnell", input={"prompt": f"{m_ide}, {m_stil} style", "aspect_ratio": "16:9"})
                     img_url = get_url(img_raw)
                     st.image(img_url, caption="AI-genererad scen")
-                    
-                    # 2. SKRIV TEXT (Bytt till Llama 3.1 för stabilitet)
-                    lyrics_res = replicate.run(
-                        "meta/meta-llama-3.1-405b-instruct", 
-                        input={"prompt": f"Write 4 short rhyming lines in {out_lang} about '{m_ide}'. ONLY lyrics, no quotes."}
-                    )
+                    # 2. SKRIV TEXT
+                    lyrics_res = replicate.run("meta/meta-llama-3.1-405b-instruct", input={"prompt": f"Write 4 short rhyming lines in {out_lang} about '{m_ide}'. ONLY lyrics."})
                     lyrics = "".join(lyrics_res).replace('"', '')
-                    
-                    # 3. GENERERA VIDEO & MUSIK
+                    # 3. VIDEO & MUSIK
                     v_raw = replicate.run("minimax/video-01", input={"prompt": "Cinematic movement", "first_frame_image": img_url})
                     v_url = get_url(v_raw)
-                    
                     m_raw = replicate.run("minimax/music-1.5", input={"prompt": f"{m_stil} style, {m_voice} vocals", "lyrics": lyrics})
                     m_url = get_url(m_raw)
-                    
                     # 4. MONTERING
                     with open("v1.mp4", "wb") as f: f.write(requests.get(v_url).content)
                     with open("a1.mp3", "wb") as f: f.write(requests.get(m_url).content)
                     clip = VideoFileClip("v1.mp4")
                     audio = AudioFileClip("a1.mp3").set_duration(clip.duration)
                     clip.set_audio(audio).write_videofile("out1.mp4", codec="libx264", audio_codec="aac")
-                    
                     st.video("out1.mp4")
-                    st.download_button("💾 EXPORTERA", open("out1.mp4", "rb"), "tomingai_magic.mp4")
 
-    # --- BEHÅLL FLIK 2 & 3 ---
-    with tab2: st.info("Flik 2 är redo för dina egna bilder.")
-    with tab3: st.info("Flik 3 är redo för din musik.")
+    # --- FLIK 2: REGISSÖREN ---
+    with tab2:
+        col1, col2 = st.columns(2)
+        with col1:
+            bild = st.file_uploader("Ladda upp egen bild", type=["jpg", "png", "jpeg"], key="r_img")
+            if bild: st.image(bild, use_container_width=True)
+        with col2:
+            r_ide = st.text_input(f"Låtens handling ({in_lang}):", "En sång om mig själv", key="r_ide")
+            r_stil_regi = st.selectbox("Filmstil:", ["Cyberpunk", "Cinematic", "Anime"], key="r_stil")
+            if st.button("⚡ PRODUCERA", key="r_btn"):
+                if bild:
+                    with st.status(f"Jobbar på {out_lang}..."):
+                        lyrics_r = "".join(replicate.run("meta/meta-llama-3.1-405b-instruct", input={"prompt": f"Write 4 rhyming lines in {out_lang} about '{r_ide}'."})).replace('"', '')
+                        v_r_raw = replicate.run("minimax/video-01", input={"prompt": "Cinematic movement", "first_frame_image": bild})
+                        v_r_url = get_url(v_r_raw)
+                        m_r_raw = replicate.run("minimax/music-1.5", input={"prompt": f"{r_stil_regi} style, {m_voice} vocals", "lyrics": lyrics_r})
+                        m_r_url = get_url(m_r_raw)
+                        with open("v2.mp4", "wb") as f: f.write(requests.get(v_r_url).content)
+                        with open("a2.mp3", "wb") as f: f.write(requests.get(m_r_url).content)
+                        clip2 = VideoFileClip("v2.mp4")
+                        audio2 = AudioFileClip("a2.mp3").set_duration(clip2.duration)
+                        clip2.set_audio(audio2).write_videofile("out2.mp4", codec="libx264", audio_codec="aac")
+                        st.video("out2.mp4")
+                else: st.error("Ladda upp en bild först!")
+
+    # --- FLIK 3: BARA MUSIK ---
+    with tab3:
+        mus_col1, mus_col2 = st.columns(2)
+        with mus_col1:
+            mus_ide = st.text_area(f"Låtens handling ({in_lang}):", "En dröm om framtiden", key="mus_ide")
+            mus_stil = st.text_input("Musikstil:", "Swedish Pop, Piano", key="mus_stil")
+        with mus_col2:
+            if st.button("🎵 GENERERA LÅT", key="mus_btn"):
+                with st.status(f"Sjunger på {out_lang}..."):
+                    mus_lyrics = "".join(replicate.run("meta/meta-llama-3.1-405b-instruct", input={"prompt": f"Write 6 rhyming lines in {out_lang} about '{mus_ide}'."})).replace('"', '')
+                    mus_res = replicate.run("minimax/music-1.5", input={"prompt": f"{mus_stil}, {m_voice} vocals", "lyrics": mus_lyrics})
+                    st.audio(get_url(mus_res))
+                    st.success(f"Sångtext ({out_lang}): {mus_lyrics}")
 
 else:
-    st.error("⚠️ Kontrollera Secrets.")
+    st.error("⚠️ Kontrollera REPLICATE_API_TOKEN i Secrets.")
 
 
 
