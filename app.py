@@ -43,28 +43,29 @@ if api_key_found:
             if st.button("🪄 SKAPA MAGISKT MANUS & TEXT"):
                 with st.spinner("AI:n analyserar bilden och skriver..."):
                     try:
-                        # AI:n analyserar bilden (Llava)
+                        # Vi använder huvudnamnet utan sifferkod för att slippa 422-fel
+                        # Analyserar bilden
                         analysis = replicate.run(
-                            "yorickvp/llava-v1.6-vicuna-13b:0603dec596080305cb121a65853cd3578513d773528f9e0e6aa2f5d04ac838ad",
+                            "yorickvp/llava-v1.6-vicuna-13b",
                             input={"image": bild, "prompt": "Describe a cinematic camera movement for this image. Keep it short and in English."}
                         )
                         st.session_state['ai_v_prompt'] = "".join(analysis)
                         
-                        # AI:n skriver låttext (Llama 3)
+                        # Skriver låttext på svenska
                         lyrics_ai = replicate.run(
                             "meta/meta-llama-3-70b-instruct",
-                            input={"prompt": f"Write 4 short rhyming lines in Swedish for a song about this scene: {st.session_state['ai_v_prompt']}. Poetic style.", "max_new_tokens": 100}
+                            input={"prompt": f"Skriv 4 korta rimmade rader på svenska för en låt om denna scen: {st.session_state['ai_v_prompt']}. Poetisk stil.", "max_new_tokens": 100}
                         )
                         st.session_state['ai_lyrics'] = "".join(lyrics_ai)
                         st.rerun()
                     except Exception as e:
                         st.error(f"AI-fel: {e}")
+                        st.info("Tips: Om felet kvarstår, skriv in eget manus till höger!")
 
     with col2:
         st.subheader("🧠 PROCESSOR: AUTOMANUS")
         stil = st.selectbox("Filmstil:", ["Cyberpunk", "Vintage 8mm", "Cinematic", "Anime", "Pop Art"])
         
-        # Dessa rutor fylls i automatiskt av den magiska staven
         v_prompt = st.text_input("Kamerarörelse (AI-genererad):", st.session_state.get('ai_v_prompt', "Slow cinematic zoom"))
         lyrics = st.text_area("Låttext (AI-genererad):", st.session_state.get('ai_lyrics', "[Instrumental]"))
         
@@ -74,16 +75,10 @@ if api_key_found:
             else:
                 with st.status("PROSESSERAR NEON-DATA...", expanded=True):
                     try:
-                        # 1. Video (MiniMax)
-                        st.write("🎥 Genererar video...")
+                        # Vi använder MiniMax för Video och Musik - de är de mest stabila
                         v_url = str(replicate.run("minimax/video-01", input={"prompt": f"{v_prompt}, in {stil} style", "first_frame_image": bild}))
-
-                        # 2. Musik (MiniMax)
-                        st.write("🎵 Komponerar musik & sång...")
                         m_url = str(replicate.run("minimax/music-1.5", input={"prompt": f"{stil} soundtrack", "lyrics": lyrics}))
 
-                        # 3. Montering
-                        st.write("✂️ Synkar ljud och bild...")
                         with open("v.mp4", "wb") as f: f.write(requests.get(v_url).content)
                         with open("a.mp3", "wb") as f: f.write(requests.get(m_url).content)
                         
@@ -98,6 +93,7 @@ if api_key_found:
                         st.error(f"SYSTEMFEL: {e}")
 else:
     st.error("⚠️ ÅTKOMST NEKAD: Lägg till REPLICATE_API_TOKEN i Streamlit Secrets.")
+
 
 
 
