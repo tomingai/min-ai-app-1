@@ -4,19 +4,22 @@ import os
 import requests
 from moviepy.editor import VideoFileClip, AudioFileClip
 
-# --- DESIGN & SETUP ---
-st.set_page_config(page_title="TOMINGAI MUSIC STUDIO", page_icon="🎵", layout="wide")
+# --- 1. SETUP & DESIGN ---
+st.set_page_config(page_title="TOMINGAI STUDIO PRO", page_icon="🎵", layout="wide")
 
 st.markdown("""
     <style>
     .main { background-color: #050505; }
-    .stSlider > div > div > div > div { background: #00f2ff; }
-    .neon-title { color: #fff; text-shadow: 0 0 20px #00f2ff; font-size: 40px; font-weight: 900; text-align: center; }
+    .neon-title { color: #fff; text-shadow: 0 0 20px #00f2ff; font-size: 40px; font-weight: 900; text-align: center; margin-bottom: 20px; }
+    .stTabs [data-baseweb="tab-list"] { gap: 24px; justify-content: center; }
+    .stTabs [data-baseweb="tab"] { height: 50px; white-space: pre-wrap; background-color: #111; border-radius: 5px; color: white; }
+    .stTabs [aria-selected="true"] { background-color: #00f2ff !important; color: black !important; font-weight: bold; }
     </style>
     """, unsafe_allow_html=True)
 
-st.markdown('<p class="neon-title">🎵 TOMINGAI MUSIC & VIDEO STUDIO</p>', unsafe_allow_html=True)
+st.markdown('<p class="neon-title">⚡ TOMINGAI MULTI-STUDIO</p>', unsafe_allow_html=True)
 
+# Hämta API-nyckel
 if "REPLICATE_API_TOKEN" in st.secrets:
     os.environ["REPLICATE_API_TOKEN"] = st.secrets["REPLICATE_API_TOKEN"]
     api_key_found = True
@@ -24,61 +27,61 @@ else:
     api_key_found = False
 
 if api_key_found:
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.subheader("📸 VISUELL KÄLLA")
-        bild = st.file_uploader("Ladda upp bild", type=["jpg", "png", "jpeg"])
-        if bild: st.image(bild, use_container_width=True)
-        
-        st.divider()
-        st.subheader("🎬 KAMERAREGISSÖR")
-        v_prompt = st.text_area("Beskriv rörelsen:", "Cinematic slow motion, high quality")
+    # SKAPA FLIKAR
+    tab1, tab2 = st.tabs(["🎬 MUSIKVIDEO (BILD + LJUD)", "🎧 BARA MUSIK (LÅTSKRIVARE)"])
 
-    with col2:
-        st.subheader("🎸 MUSIKPRODUCENT")
-        # Här skapar vi din egen musik-mixer!
-        genre = st.selectbox("Huvudgenre:", ["Synthwave", "Heavy Metal", "Deep House", "Acoustic Guitar", "Lofi Hip Hop", "Swedish Pop"])
-        mood = st.select_slider("Stämning:", options=["Mörkt/Dramatiskt", "Lugnt", "Energiskt", "Glatt"])
-        
-        instrument = st.text_input("Extra instrument (t.ex. 'Saxofon', 'Distad elgitarr'):", "Synthesizer")
-        
-        # Sång-sektionen
-        lyrics = st.text_area("Låttext (Lämna tom för instrumental):", "[Instrumental]")
-        rost = st.radio("Sångröst:", ["Kvinna", "Man"])
-
-        # Bygg ihop musik-prompten automatiskt
-        final_m_prompt = f"{genre}, {mood}, featuring {instrument}, high quality studio recording"
-
-        if st.button("🚀 PRODUCERA MÄSTERVERK"):
-            if not bild:
-                st.error("Ladda upp en bild först!")
-            else:
-                with st.status("Skapar din unika musik och video...", expanded=True):
-                    try:
-                        # 1. Generera Video
-                        v_url = str(replicate.run("minimax/video-01", input={"prompt": v_prompt, "first_frame_image": bild}))
-                        
-                        # 2. Generera Egen Musik
-                        st.write(f"🎵 Komponerar: {final_m_prompt}...")
-                        m_url = str(replicate.run("minimax/music-1.5", input={
-                            "prompt": final_m_prompt,
-                            "lyrics": lyrics,
-                            "audio_format": "mp3"
-                        }))
-
-                        # 3. Montering
+    # --- FLIK 1: MUSIKVIDEO ---
+    with tab1:
+        col1, col2 = st.columns(2)
+        with col1:
+            bild = st.file_uploader("Ladda upp bild", type=["jpg", "png", "jpeg"], key="v_img")
+            if bild: st.image(bild, use_container_width=True)
+        with col2:
+            v_style = st.selectbox("Stil:", ["Cyberpunk", "Cinematic", "Anime", "Vintage"], key="v_style")
+            v_lyrics = st.text_area("Låttext (Sång):", "[Instrumental]", key="v_lyr")
+            if st.button("🚀 SKAPA MUSIKVIDEO", key="v_btn"):
+                if bild:
+                    with st.status("Producerar film..."):
+                        v_url = str(replicate.run("minimax/video-01", input={"prompt": f"Cinematic movement, {v_style} style", "first_frame_image": bild}))
+                        m_url = str(replicate.run("minimax/music-1.5", input={"prompt": f"{v_style} soundtrack", "lyrics": v_lyrics}))
+                        # Montering
                         with open("v.mp4", "wb") as f: f.write(requests.get(v_url).content)
                         with open("a.mp3", "wb") as f: f.write(requests.get(m_url).content)
-                        
                         clip = VideoFileClip("v.mp4")
                         audio = AudioFileClip("a.mp3").set_duration(clip.duration)
                         clip.set_audio(audio).write_videofile("out.mp4", codec="libx264", audio_codec="aac")
-                        
                         st.video("out.mp4")
-                        st.download_button("💾 LADDA NER FILMEN", open("out.mp4", "rb"), "tomingai_studio.mp4")
-                    except Exception as e:
-                        st.error(f"Fel: {e}")
+                        st.download_button("💾 LADDA NER VIDEO", open("out.mp4", "rb"), "video.mp4")
+                else: st.error("Ladda upp en bild!")
+
+    # --- FLIK 2: BARA MUSIK ---
+    with tab2:
+        st.subheader("🎸 Skapa en unik låt")
+        m_col1, m_col2 = st.columns(2)
+        with m_col1:
+            genre = st.text_input("Genre & Instrument:", "Swedish Pop, Acoustic Guitar, Piano")
+            mood = st.select_slider("Känsla:", options=["Sorgligt", "Lugnt", "Glatt", "Party!"])
+        with m_col2:
+            m_lyrics = st.text_area("Din låttext (Lyrics):", "Här i nattens tysta timma, ser jag stjärnorna få glimma.", key="m_lyr_only")
+            m_rost = st.radio("Sångröst:", ["Kvinna", "Man"], horizontal=True)
+
+        if st.button("🎵 GENERERA LÅT", key="m_only_btn"):
+            with st.status("AI:n komponerar och sjunger..."):
+                try:
+                    # Vi ber om en längre låt här
+                    music_res = replicate.run(
+                        "minimax/music-1.5",
+                        input={
+                            "prompt": f"{genre}, {mood} mood, {m_rost} vocals, high quality studio recording",
+                            "lyrics": m_lyrics
+                        }
+                    )
+                    st.audio(music_res.url)
+                    st.success("Låten är klar!")
+                    st.markdown(f"[🔗 Direktlänk till ljudfilen]({music_res.url})")
+                except Exception as e:
+                    st.error(f"Fel: {e}")
+
 else:
     st.error("Nyckel saknas i Secrets!")
 
