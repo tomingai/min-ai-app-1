@@ -31,10 +31,12 @@ st.markdown("""
 
 st.markdown('<div class="neon-container"><p class="neon-title">TOMINGAI</p><p style="color:#00f2ff; letter-spacing:10px; margin-top:20px;">GLOBAL AI ENGINE // TRIPLE MODE</p></div>', unsafe_allow_html=True)
 
-# HJÄLPFUNKTION FÖR ATT EXTRAHERA URL:er (Fixar kraschen)
+# HJÄLPFUNKTION FÖR ATT HÄMTA REN URL (Fixar kraschen)
 def get_url(output):
-    if isinstance(output, list): return output[0]
-    if hasattr(output, 'url'): return output.url
+    if isinstance(output, list):
+        return str(output[0])
+    if hasattr(output, 'url'):
+        return str(output.url)
     return str(output)
 
 with st.sidebar:
@@ -62,7 +64,7 @@ if api_key_found:
         with col2:
             if st.button("🚀 SKAPA MAGI", key="m_btn"):
                 with st.status(f"Producerar på {out_lang}...") as status:
-                    # 1. RITA BILD (Med URL-fix)
+                    # 1. RITA BILD (Här fixas kraschen!)
                     img_raw = replicate.run("black-forest-labs/flux-schnell", input={"prompt": f"{m_ide}, {m_stil} style", "aspect_ratio": "16:9"})
                     img_url = get_url(img_raw)
                     st.image(img_url, caption="AI-genererad scen")
@@ -71,7 +73,7 @@ if api_key_found:
                     lyrics_res = replicate.run("meta/meta-llama-3-70b-instruct", input={"prompt": f"Write 4 rhyming lines in {out_lang} about '{m_ide}'. ONLY lyrics."})
                     lyrics = "".join(lyrics_res).replace('"', '')
                     
-                    # 3. GENERERA VIDEO & MUSIK (Med URL-fix)
+                    # 3. GENERERA VIDEO & MUSIK
                     v_raw = replicate.run("minimax/video-01", input={"prompt": "Cinematic movement", "first_frame_image": img_url})
                     v_url = get_url(v_raw)
                     
@@ -86,7 +88,8 @@ if api_key_found:
                     clip.set_audio(audio).write_videofile("out1.mp4", codec="libx264", audio_codec="aac")
                     
                     st.video("out1.mp4")
-                    st.download_button("💾 EXPORTERA", open("out1.mp4", "rb"), "tomingai_magic.mp4")
+                    with open("out1.mp4", "rb") as f:
+                        st.download_button("💾 EXPORTERA", f, "tomingai_magic.mp4")
 
     with tab2:
         col1, col2 = st.columns(2)
@@ -120,6 +123,7 @@ if api_key_found:
 
 else:
     st.error("⚠️ Kontrollera Secrets.")
+
 
 
 
