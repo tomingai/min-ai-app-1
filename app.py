@@ -24,13 +24,13 @@ if api_key:
             if st.button("🪄 Skapa magiskt manus"):
                 with st.spinner("AI:n analyserar din bild..."):
                     try:
-                        # Vi använder Google Gemini Pro Vision - den absolut mest stabila modellen
+                        # Vi använder moondream2 - den är blixtsnabb och stabil!
                         analysis = replicate.run(
-                            "google-deepmind/gemini-1.5-pro",
-                            input={"image": bild, "prompt": f"Describe the person in this image and suggest a cinematic camera movement in {stil} style. Keep it short."}
+                            "lucataco/moondream2:6108f974860f4e164223298cf085b306b3a0e6983802e3b2e04332468205f037",
+                            input={"image": bild, "prompt": "Describe this person and the scene briefly for a movie script."}
                         )
                         beskrivning = "".join(analysis)
-                        st.session_state['v_prompt'] = beskrivning
+                        st.session_state['v_prompt'] = f"{beskrivning}. Cinematic camera movement, {stil} style."
                         st.session_state['m_prompt'] = f"{stil} music soundtrack, high quality"
                         st.rerun()
                     except Exception as e:
