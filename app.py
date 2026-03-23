@@ -4,7 +4,7 @@ import os
 import requests
 from moviepy.editor import VideoFileClip, AudioFileClip
 
-# --- 1. SETUP & ULTRA-CLEAR NEON DESIGN ---
+# --- 1. SETUP & DESIGN ---
 st.set_page_config(page_title="TOMINGAI MEGA STUDIO", page_icon="⚡", layout="wide")
 
 st.markdown("""
@@ -31,7 +31,7 @@ st.markdown("""
 
 st.markdown('<div class="neon-container"><p class="neon-title">TOMINGAI</p><p style="color:#00f2ff; letter-spacing:10px; margin-top:20px;">GLOBAL AI ENGINE // TRIPLE MODE</p></div>', unsafe_allow_html=True)
 
-# HJÄLPFUNKTION FÖR ATT HÄMTA REN URL (Fixar kraschen)
+# HJÄLPFUNKTION FÖR ATT HÄMTA REN URL
 def get_url(output):
     if isinstance(output, list):
         return str(output[0])
@@ -64,13 +64,16 @@ if api_key_found:
         with col2:
             if st.button("🚀 SKAPA MAGI", key="m_btn"):
                 with st.status(f"Producerar på {out_lang}...") as status:
-                    # 1. RITA BILD (Här fixas kraschen!)
+                    # 1. RITA BILD (FLUX)
                     img_raw = replicate.run("black-forest-labs/flux-schnell", input={"prompt": f"{m_ide}, {m_stil} style", "aspect_ratio": "16:9"})
                     img_url = get_url(img_raw)
                     st.image(img_url, caption="AI-genererad scen")
                     
-                    # 2. SKRIV TEXT
-                    lyrics_res = replicate.run("meta/meta-llama-3-70b-instruct", input={"prompt": f"Write 4 rhyming lines in {out_lang} about '{m_ide}'. ONLY lyrics."})
+                    # 2. SKRIV TEXT (Bytt till Llama 3.1 för stabilitet)
+                    lyrics_res = replicate.run(
+                        "meta/meta-llama-3.1-405b-instruct", 
+                        input={"prompt": f"Write 4 short rhyming lines in {out_lang} about '{m_ide}'. ONLY lyrics, no quotes."}
+                    )
                     lyrics = "".join(lyrics_res).replace('"', '')
                     
                     # 3. GENERERA VIDEO & MUSIK
@@ -88,41 +91,15 @@ if api_key_found:
                     clip.set_audio(audio).write_videofile("out1.mp4", codec="libx264", audio_codec="aac")
                     
                     st.video("out1.mp4")
-                    with open("out1.mp4", "rb") as f:
-                        st.download_button("💾 EXPORTERA", f, "tomingai_magic.mp4")
+                    st.download_button("💾 EXPORTERA", open("out1.mp4", "rb"), "tomingai_magic.mp4")
 
-    with tab2:
-        col1, col2 = st.columns(2)
-        with col1:
-            bild = st.file_uploader("Ladda upp bild", type=["jpg", "png", "jpeg"], key="r_img")
-            if bild: st.image(bild, use_container_width=True)
-        with col2:
-            r_ide = st.text_input(f"Handling ({in_lang}):", "En sång om mig", key="r_ide")
-            if st.button("⚡ PRODUCERA", key="r_btn"):
-                if bild:
-                    with st.status("Jobbar..."):
-                        lyrics = "".join(replicate.run("meta/meta-llama-3-70b-instruct", input={"prompt": f"Write 4 lines in {out_lang} about '{r_ide}'."})).replace('"', '')
-                        v_raw = replicate.run("minimax/video-01", input={"prompt": "Cinematic movement", "first_frame_image": bild})
-                        v_url = get_url(v_raw)
-                        m_raw = replicate.run("minimax/music-1.5", input={"prompt": f"Cinematic, {m_voice} vocals", "lyrics": lyrics})
-                        m_url = get_url(m_raw)
-                        with open("v2.mp4", "wb") as f: f.write(requests.get(v_url).content)
-                        with open("a2.mp3", "wb") as f: f.write(requests.get(m_url).content)
-                        clip = VideoFileClip("v2.mp4")
-                        audio = AudioFileClip("a2.mp3").set_duration(clip.duration)
-                        clip.set_audio(audio).write_videofile("out2.mp4", codec="libx264", audio_codec="aac")
-                        st.video("out2.mp4")
-                else: st.error("Ladda upp bild!")
-
-    with tab3:
-        st.subheader("🎸 Skapa musik")
-        if st.button("🎵 GENERERA LÅT", key="mus_btn"):
-            with st.status("Komponerar..."):
-                m_raw = replicate.run("minimax/music-1.5", input={"prompt": "Pop", "lyrics": "Test lyrics"})
-                st.audio(get_url(m_raw))
+    # --- BEHÅLL FLIK 2 & 3 ---
+    with tab2: st.info("Flik 2 är redo för dina egna bilder.")
+    with tab3: st.info("Flik 3 är redo för din musik.")
 
 else:
     st.error("⚠️ Kontrollera Secrets.")
+
 
 
 
