@@ -54,7 +54,7 @@ if api_key_found:
             if st.button("🚀 SKAPA MAGI", key="m_btn"):
                 with st.status("AI-hjärnan skapar allt...") as status:
                     img_raw = replicate.run("black-forest-labs/flux-schnell", input={"prompt": f"{m_ide}, {m_stil} style", "aspect_ratio": "16:9"})
-                    img_url = img_raw if isinstance(img_raw, list) else str(img_raw)
+                    img_url = img_raw[0] if isinstance(img_raw, list) else str(img_raw)
                     lyrics_res = replicate.run("meta/llama-2-70b-chat", input={"prompt": f"Write 4 rhyming lines in {out_lang} about '{m_ide}'. ONLY lyrics."})
                     lyrics = "".join(lyrics_res).replace('"', '').strip()
                     v_url = str(replicate.run("minimax/video-01", input={"prompt": "Cinematic movement", "first_frame_image": img_url}))
@@ -107,10 +107,21 @@ if api_key_found:
                     mus_lyrics_res = replicate.run("meta/llama-2-70b-chat", input={"prompt": f"Write 6 rhyming lines in {out_lang} about '{mus_ide}'. ONLY lyrics."})
                     mus_lyrics = "".join(mus_lyrics_res).replace('"', '')
                     mus_res = str(replicate.run("facebookresearch/musicgen:7b3212fb7983471439735c0529d06634", input={"prompt": mus_stil, "duration": 15}))
+                    
                     st.audio(mus_res)
                     st.success(f"Sångtext ({out_lang}): {mus_lyrics}")
+                    
+                    # Ladda ner MP3-knappen
+                    audio_data = requests.get(mus_res).content
+                    st.download_button(
+                        label="💾 LADDA NER MP3",
+                        data=audio_data,
+                        file_name="tomingai_audio.mp3",
+                        mime="audio/mp3"
+                    )
 else:
     st.error("⚠️ Kontrollera REPLICATE_API_TOKEN i Secrets.")
+
 
 
 
