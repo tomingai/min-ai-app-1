@@ -4,10 +4,9 @@ import os
 import requests
 from moviepy.editor import VideoFileClip, AudioFileClip
 
-# --- 1. SETUP & FUTURISTISK DESIGN ---
+# --- 1. SETUP & DESIGN ---
 st.set_page_config(page_title="TOMINGAI NEON STUDIO", page_icon="⚡", layout="wide")
 
-# NEON CSS STYLING
 st.markdown("""
     <style>
     .main { background-color: #050505; }
@@ -18,16 +17,14 @@ st.markdown("""
     }
     .neon-text {
         font-family: 'Courier New', Courier, monospace; font-size: 50px;
-        font-weight: 900; color: #fff;
-        text-shadow: 0 0 5px #fff, 0 0 20px #00f2ff; margin: 0;
+        font-weight: 900; color: #fff; text-shadow: 0 0 20px #00f2ff; margin: 0;
     }
-    .neon-sub { color: #00f2ff; letter-spacing: 5px; font-size: 12px; margin-top: 10px; }
     .stButton>button { background-color: transparent; color: #00f2ff; border: 2px solid #00f2ff; width: 100%; }
     .stButton>button:hover { background-color: #00f2ff; color: black; box-shadow: 0px 0px 15px #00f2ff; }
     </style>
     """, unsafe_allow_html=True)
 
-st.markdown('<div class="neon-wrapper"><p class="neon-text">TOMINGAI</p><p class="neon-sub">A.I. NEON ENGINE // FULL PRODUCTION</p></div>', unsafe_allow_html=True)
+st.markdown('<div class="neon-wrapper"><p class="neon-text">TOMINGAI</p><p style="color:#00f2ff;">A.I. AUTO-DIRECTOR ENGINE</p></div>', unsafe_allow_html=True)
 
 if "REPLICATE_API_TOKEN" in st.secrets:
     os.environ["REPLICATE_API_TOKEN"] = st.secrets["REPLICATE_API_TOKEN"]
@@ -43,47 +40,47 @@ if api_key_found:
         bild = st.file_uploader("Ladda upp bild", type=["jpg", "png", "jpeg"])
         if bild: 
             st.image(bild, use_container_width=True)
-            # NYTT: Knapp för att låta AI:n skriva texten åt dig
-            if st.button("🪄 SKAPA MAGISK TEXT"):
-                with st.spinner("AI:n skriver låttext..."):
+            if st.button("🪄 SKAPA MAGISKT MANUS & TEXT"):
+                with st.spinner("AI:n analyserar bilden och skriver..."):
                     try:
-                        # Vi låter en text-modell (Llama 3) skriva texten
-                        lyrics_prompt = f"Write 4 short rhyming lines for a song. Theme: Digital future and the person in the image. Style: Poetic. Language: Swedish."
+                        # AI:n analyserar bilden (Llava)
+                        analysis = replicate.run(
+                            "yorickvp/llava-v1.6-vicuna-13b:0603dec596080305cb121a65853cd3578513d773528f9e0e6aa2f5d04ac838ad",
+                            input={"image": bild, "prompt": "Describe a cinematic camera movement for this image. Keep it short and in English."}
+                        )
+                        st.session_state['ai_v_prompt'] = "".join(analysis)
+                        
+                        # AI:n skriver låttext (Llama 3)
                         lyrics_ai = replicate.run(
                             "meta/meta-llama-3-70b-instruct",
-                            input={"prompt": lyrics_prompt, "max_new_tokens": 100}
+                            input={"prompt": f"Write 4 short rhyming lines in Swedish for a song about this scene: {st.session_state['ai_v_prompt']}. Poetic style.", "max_new_tokens": 100}
                         )
                         st.session_state['ai_lyrics'] = "".join(lyrics_ai)
                         st.rerun()
                     except Exception as e:
-                        st.error(f"Text-fel: {e}")
+                        st.error(f"AI-fel: {e}")
 
     with col2:
-        st.subheader("🧠 PROCESSOR: MANUS & SÅNG")
-        stil = st.selectbox("Välj musikstil:", ["Cyberpunk", "Pop", "Jazz", "Hip Hop", "Epic Orchestral"])
+        st.subheader("🧠 PROCESSOR: AUTOMANUS")
+        stil = st.selectbox("Filmstil:", ["Cyberpunk", "Vintage 8mm", "Cinematic", "Anime", "Pop Art"])
         
-        # Här hamnar den genererade texten automatiskt
-        user_lyrics = st.text_area("Låttext (Lyrics):", st.session_state.get('ai_lyrics', "[Instrumental]"))
+        # Dessa rutor fylls i automatiskt av den magiska staven
+        v_prompt = st.text_input("Kamerarörelse (AI-genererad):", st.session_state.get('ai_v_prompt', "Slow cinematic zoom"))
+        lyrics = st.text_area("Låttext (AI-genererad):", st.session_state.get('ai_lyrics', "[Instrumental]"))
         
-        rorelse = st.radio("Kamerarörelse:", [
-            "Slow cinematic zoom in on face", 
-            "Slow pan from left to right", 
-            "The person is smiling and blinking"
-        ])
-        
-        if st.button("⚡ INITIALISERA FULL PRODUKTION"):
+        if st.button("⚡ PRODUCERA MÄSTERVERK"):
             if not bild:
                 st.error("Ladda upp en bild först!")
             else:
                 with st.status("PROSESSERAR NEON-DATA...", expanded=True):
                     try:
-                        # 1. Skapa Video
+                        # 1. Video (MiniMax)
                         st.write("🎥 Genererar video...")
-                        v_url = str(replicate.run("minimax/video-01", input={"prompt": f"{rorelse}, {stil} style", "first_frame_image": bild}))
+                        v_url = str(replicate.run("minimax/video-01", input={"prompt": f"{v_prompt}, in {stil} style", "first_frame_image": bild}))
 
-                        # 2. Skapa Musik/Sång
-                        st.write("🎵 Komponerar musik och sång...")
-                        m_url = str(replicate.run("minimax/music-1.5", input={"prompt": f"{stil} style, high quality", "lyrics": user_lyrics}))
+                        # 2. Musik (MiniMax)
+                        st.write("🎵 Komponerar musik & sång...")
+                        m_url = str(replicate.run("minimax/music-1.5", input={"prompt": f"{stil} soundtrack", "lyrics": lyrics}))
 
                         # 3. Montering
                         st.write("✂️ Synkar ljud och bild...")
@@ -96,8 +93,7 @@ if api_key_found:
                         
                         st.video("out.mp4")
                         with open("out.mp4", "rb") as f:
-                            st.download_button("💾 EXPORTERA MÄSTERVERK", f, "tomingai_video.mp4")
-                        
+                            st.download_button("💾 EXPORTERA", f, "tomingai_master.mp4")
                     except Exception as e:
                         st.error(f"SYSTEMFEL: {e}")
 else:
