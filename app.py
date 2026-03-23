@@ -24,14 +24,14 @@ if api_key:
             if st.button("🪄 Skapa magiskt manus"):
                 with st.spinner("AI:n analyserar din bild..."):
                     try:
-                        # Vi använder moondream för att analysera bilden - mycket stabilare!
+                        # Vi använder Google Gemini Pro Vision - den absolut mest stabila modellen
                         analysis = replicate.run(
-                            "lucataco/moondream2:6108f974860f4e164223298cf085b306b3a0e6983802e3b2e04332468205f037",
-                            input={"image": bild, "prompt": "Describe this person and the scene briefly."}
+                            "google-deepmind/gemini-1.5-pro",
+                            input={"image": bild, "prompt": f"Describe the person in this image and suggest a cinematic camera movement in {stil} style. Keep it short."}
                         )
                         beskrivning = "".join(analysis)
-                        st.session_state['v_prompt'] = f"{beskrivning}. Cinematic camera movement, {stil} style."
-                        st.session_state['m_prompt'] = f"{stil} music soundtrack, emotional"
+                        st.session_state['v_prompt'] = beskrivning
+                        st.session_state['m_prompt'] = f"{stil} music soundtrack, high quality"
                         st.rerun()
                     except Exception as e:
                         st.error(f"Analys-fel: {e}")
@@ -44,11 +44,11 @@ if api_key:
         if st.button("🚀 PRODUCERA FILMEN"):
             with st.status("Producerar din film...", expanded=True):
                 try:
-                    # 1. Video & Musik
+                    # Video & Musik med MiniMax
                     v_url = str(replicate.run("minimax/video-01", input={"prompt": v_p, "first_frame_image": bild}))
                     m_url = str(replicate.run("minimax/music-1.5", input={"prompt": m_p, "lyrics": "[Instrumental]"}))
 
-                    # 2. Montering
+                    # Montering
                     with open("v.mp4", "wb") as f: f.write(requests.get(v_url).content)
                     with open("a.mp3", "wb") as f: f.write(requests.get(m_url).content)
                     
@@ -63,5 +63,6 @@ if api_key:
                     st.error(f"Produktions-fel: {e}")
 else:
     st.info("Klistra in din API-nyckel i sidomenyn!")
+
 
 
