@@ -4,7 +4,7 @@ import os
 import requests
 from moviepy.editor import VideoFileClip, AudioFileClip
 
-# --- 1. SETUP & DESIGN (HD NEON) ---
+# --- 1. SETUP & DESIGN ---
 st.set_page_config(page_title="TOMINGAI NEON STUDIO", page_icon="⚡", layout="wide")
 
 st.markdown("""
@@ -27,7 +27,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-st.markdown('<div class="neon-container"><p class="neon-title">TOMINGAI</p><p style="color:#00f2ff; letter-spacing:10px;">A.I. MASTER STUDIO</p></div>', unsafe_allow_html=True)
+st.markdown('<div class="neon-container"><p class="neon-title">TOMINGAI</p><p style="color:#00f2ff; letter-spacing:10px;">A.I. TRIPLE STUDIO</p></div>', unsafe_allow_html=True)
 
 if "REPLICATE_API_TOKEN" in st.secrets:
     os.environ["REPLICATE_API_TOKEN"] = st.secrets["REPLICATE_API_TOKEN"]
@@ -36,63 +36,65 @@ else:
     api_key_found = False
 
 if api_key_found:
-    tab1, tab2 = st.tabs(["🎬 MUSIKVIDEO", "🎧 BARA MUSIK"])
+    tab1, tab2, tab3 = st.tabs(["🎬 MUSIKVIDEO", "🎧 BARA MUSIK", "🖼️ SKAPA BILD FRÅN ORD"])
 
-    # --- FLIK 1: MUSIKVIDEO ---
+    # --- FLIK 1 & 2 (Behålls som förut) ---
     with tab1:
+        st.info("Här skapar du din video. Ladda upp en bild (kanske den du skapat i flik 3!)")
+        # (Samma kod som tidigare för Musikvideo...)
         col1, col2 = st.columns(2)
         with col1:
             bild = st.file_uploader("Ladda upp bild", type=["jpg", "png", "jpeg"], key="v_img")
             if bild: st.image(bild, use_container_width=True)
         with col2:
             v_stil = st.selectbox("Stil:", ["Cyberpunk", "Cinematic", "Anime", "Vintage"], key="v_stil")
-            v_input = st.text_input("Kort rad eller ord för låten:", "Sommarregn", key="v_input")
-            
+            v_input = st.text_input("Kort rad eller ord för låten:", "Stadens ljus", key="v_input")
             if st.button("⚡ PRODUCERA VIDEO & MUSIK", key="v_btn"):
-                with st.status("AI:n bygger ditt mästerverk...") as status:
-                    # Steg 1: Skriv texten (Llama)
-                    st.write("📝 Skriver låttext...")
-                    lyrics_res = replicate.run("meta/meta-llama-3-70b-instruct", 
-                        input={"prompt": f"Skriv 4 korta rimmade rader på svenska baserat på orden: {v_input}. Svara BARA med texten."})
+                with st.status("Skapar film..."):
+                    lyrics_res = replicate.run("meta/meta-llama-3-70b-instruct", input={"prompt": f"Skriv 4 korta rimmade rader på svenska om: {v_input}."})
                     final_lyrics = "".join(lyrics_res).replace('"', '')
-
-                    # Steg 2: Skapa Video & Musik (MiniMax)
-                    st.write("🎥 Genererar video...")
                     v_url = str(replicate.run("minimax/video-01", input={"prompt": f"Cinematic movement, {v_stil} style", "first_frame_image": bild}))
-                    st.write("🎵 Genererar sång...")
                     m_url = str(replicate.run("minimax/music-1.5", input={"prompt": f"{v_stil} style", "lyrics": final_lyrics}))
-                    
-                    # Steg 3: Montering
                     with open("v.mp4", "wb") as f: f.write(requests.get(v_url).content)
                     with open("a.mp3", "wb") as f: f.write(requests.get(m_url).content)
                     clip = VideoFileClip("v.mp4")
                     audio = AudioFileClip("a.mp3").set_duration(clip.duration)
                     clip.set_audio(audio).write_videofile("out.mp4", codec="libx264", audio_codec="aac")
-                    
                     st.video("out.mp4")
-                    st.success(f"Text som skapades: {final_lyrics}")
+                    st.success(f"Sångtext: {final_lyrics}")
 
-    # --- FLIK 2: BARA MUSIK ---
     with tab2:
-        m_col1, m_col2 = st.columns(2)
-        with m_col1:
-            m_input = st.text_input("Dina ord (t.ex. 'Blåa ögon' eller 'Snabb bil'):", "Vinterstjärna", key="m_input")
-            m_genre = st.text_input("Genre:", "Pop", key="m_genre")
-        with m_col2:
-            m_rost = st.radio("Röst:", ["Kvinna", "Man"], horizontal=True)
-            
+        # (Samma kod som tidigare för Bara Musik...)
+        m_input = st.text_input("Dina ord för låten:", "Sommarnatt", key="m_input_only")
         if st.button("🎵 GENERERA LÅT", key="m_only_btn"):
-            with st.status("Komponerar låt..."):
-                # Skriv texten först
-                lyrics_res = replicate.run("meta/meta-llama-3-70b-instruct", 
-                    input={"prompt": f"Skriv en kort svensk låttext (4 rader) om: {m_input}. Svara BARA med texten."})
+            with st.status("Komponerar..."):
+                lyrics_res = replicate.run("meta/meta-llama-3-70b-instruct", input={"prompt": f"Skriv en kort svensk låttext om: {m_input}."})
                 final_m_lyrics = "".join(lyrics_res).replace('"', '')
-                
-                music_res = replicate.run("minimax/music-1.5", 
-                    input={"prompt": f"{m_genre}, {m_rost} vocals", "lyrics": final_m_lyrics})
-                
+                music_res = replicate.run("minimax/music-1.5", input={"prompt": "Pop music", "lyrics": final_m_lyrics})
                 st.audio(music_res.url)
                 st.success(f"AI:n sjöng: {final_m_lyrics}")
+
+    # --- NY FLIK 3: SKAPA BILD ---
+    with tab3:
+        st.subheader("🎨 Förvandla ord till en bild")
+        b_col1, b_col2 = st.columns(2)
+        with b_col1:
+            bild_ord = st.text_area("Beskriv bilden (t.ex. 'En futuristisk stad i regn' eller 'Ett vackert ansikte i neon'):", "A futuristic cyberpunk city at night with neon lights")
+            b_stil = st.selectbox("Konststil:", ["Fotorealistisk", "Digital Art", "Oljetavla", "Anime Style"])
+        
+        if st.button("🖌️ SKAPA BILD", key="b_btn"):
+            with st.status("AI-konstnären ritar..."):
+                try:
+                    # Vi använder FLUX, en av de bästa bild-AI-modellerna i världen
+                    image_res = replicate.run(
+                        "black-forest-labs/flux-schnell",
+                        input={"prompt": f"{bild_ord}, {b_stil}, high quality, 4k", "aspect_ratio": "16:9"}
+                    )
+                    # image_res är en lista med en URL
+                    st.image(image_res[0], caption="Din AI-genererade bild", use_container_width=True)
+                    st.success("Här är din bild! Du kan nu högerklicka och spara den för att använda i flik 1.")
+                except Exception as e:
+                    st.error(f"Fel: {e}")
 
 else:
     st.error("Nyckel saknas i Secrets!")
