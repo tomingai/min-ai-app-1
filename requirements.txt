@@ -1,7 +1,7 @@
 streamlit
-replicate
+replicate==0.22.0
+pydantic==2.5.3
 moviepy
 requests
 st-supabase-connection
 supabase
-
