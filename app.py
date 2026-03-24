@@ -7,17 +7,17 @@ from moviepy.editor import VideoFileClip, AudioFileClip, vfx
 import datetime
 
 # --- 1. SETUP & SESSION STATE (APPENS MINNE) ---
-st.set_page_config(page_title="TOMINGAI MEGA STUDIO", page_icon="⚡", layout="wide")
+st.set_page_config(page_title="MAXIMUSIKAI STUDIO", page_icon="🎵", layout="wide")
 
 if "gallery" not in st.session_state:
     st.session_state.gallery = []
 
-# --- 2. AVANCERAD DESIGN (ANIMERAD BAKGRUND & NEON) ---
+# --- 2. AVANCERAD DESIGN (MAXIMUSIKAI NEON THEME) ---
 st.markdown("""
     <style>
     /* Animerad mörk gradient-bakgrund */
     .stApp {
-        background: linear-gradient(125deg, #050505, #0a0a0a, #00151a, #050505);
+        background: linear-gradient(125deg, #050505, #0a0a0a, #0b001a, #050505);
         background-size: 400% 400%;
         animation: gradientBG 15s ease infinite;
         color: #fff;
@@ -32,39 +32,39 @@ st.markdown("""
     .neon-container {
         background: rgba(10, 10, 10, 0.85);
         padding: 40px; border-radius: 30px; 
-        border: 1px solid rgba(0, 242, 255, 0.4);
-        box-shadow: 0px 0px 60px rgba(0, 242, 255, 0.2);
+        border: 1px solid rgba(191, 0, 255, 0.4); /* Lila/Neon accent */
+        box-shadow: 0px 0px 60px rgba(191, 0, 255, 0.2);
         text-align: center; margin-bottom: 40px;
         backdrop-filter: blur(15px);
     }
     .neon-title { 
         font-family: 'Arial Black', sans-serif; font-size: 70px; font-weight: 900; 
-        color: #fff; text-shadow: 0 0 10px #00f2ff, 0 0 30px #00f2ff; margin: 0; 
+        color: #fff; text-shadow: 0 0 10px #bf00ff, 0 0 30px #bf00ff; margin: 0; 
     }
     .lyrics-box { 
         background: rgba(20, 20, 20, 0.9); padding: 20px; border-radius: 12px; 
-        border-left: 5px solid #00f2ff; color: #eee; font-family: 'Courier New', monospace; 
+        border-left: 5px solid #bf00ff; color: #eee; font-family: 'Courier New', monospace; 
         margin-top: 15px; line-height: 1.5;
     }
     /* Knappar */
     .stButton>button {
-        background: rgba(0, 242, 255, 0.05); color: #00f2ff; 
-        border: 2px solid #00f2ff; width: 100%; font-weight: bold; 
+        background: rgba(191, 0, 255, 0.05); color: #bf00ff; 
+        border: 2px solid #bf00ff; width: 100%; font-weight: bold; 
         border-radius: 12px; height: 3.5em; text-transform: uppercase; letter-spacing: 2px;
         transition: 0.4s;
     }
     .stButton>button:hover {
-        background: #00f2ff; color: #000; box-shadow: 0px 0px 40px #00f2ff;
+        background: #bf00ff; color: #000; box-shadow: 0px 0px 40px #bf00ff;
     }
     /* Tabs */
     .stTabs [data-baseweb="tab-list"] { gap: 15px; }
-    .stTabs [aria-selected="true"] { background-color: #00f2ff !important; color: #000 !important; font-weight: bold; }
+    .stTabs [aria-selected="true"] { background-color: #bf00ff !important; color: #000 !important; font-weight: bold; }
     </style>
     """, unsafe_allow_html=True)
 
-st.markdown('<div class="neon-container"><p class="neon-title">TOMINGAI</p><p style="color:#00f2ff; letter-spacing: 8px; font-weight:bold;">MEGA AI ENGINE // PROJECT EDITION</p></div>', unsafe_allow_html=True)
+st.markdown('<div class="neon-container"><p class="neon-title">MAXIMUSIKAI</p><p style="color:#bf00ff; letter-spacing: 8px; font-weight:bold;">ULTIMATE AI MUSIC & VIDEO STUDIO</p></div>', unsafe_allow_html=True)
 
-# HJÄLPFUNKTION FÖR URL:ER
+# HJÄLPFUNKTION
 def get_url(output):
     if isinstance(output, list): return str(output[0])
     if hasattr(output, 'url'): return str(output.url)
@@ -72,13 +72,13 @@ def get_url(output):
 
 # --- 3. SIDOMENY ---
 with st.sidebar:
-    st.header("⚡ STUDIO KONTROLL")
+    st.header("⚡ MAXI CONTROL")
     in_lang = st.selectbox("Ditt språk:", ["Svenska", "English", "Español", "日本語"])
     out_lang = st.selectbox("AI-språk:", ["Svenska", "English", "Español", "Français", "日本語"])
     st.divider()
     m_voice = st.radio("Röstkaraktär:", ["Kvinna", "Man"])
     st.divider()
-    if st.button("🗑️ RENSA BIBLIOTEK"):
+    if st.button("🗑️ NOLLSTÄLL STUDIO"):
         st.session_state.gallery = []
         st.rerun()
 
@@ -92,18 +92,18 @@ else:
 
 # --- 4. HUVUDAPPEN ---
 if api_ready:
-    tab1, tab2, tab3, tab4 = st.tabs(["🪄 SKAPA ALLT", "🎬 REGISSÖREN", "🎧 BARA MUSIK", "📚 BIBLIOTEK"])
+    tab1, tab2, tab3, tab4 = st.tabs(["🪄 TOTAL MAGI", "🎬 REGISSÖREN", "🎧 BARA MUSIK", "📚 BIBLIOTEK"])
 
     # --- FLIK 1: TOTAL MAGI ---
     with tab1:
         c1, c2 = st.columns([1, 1.2])
         with c1:
-            proj_name = st.text_input("Namnge ditt projekt:", f"Mästerverk {len(st.session_state.gallery)+1}")
+            proj_name = st.text_input("Projektets namn:", f"MAXI-PROJ {len(st.session_state.gallery)+1}")
             m_ide = st.text_area(f"Beskriv din vision ({in_lang}):", "En neonstad i regnet")
             m_stil = st.selectbox("Stil:", ["Cyberpunk", "Cinematic", "Anime", "Vintage 8mm"])
             
-            if st.button("🚀 STARTA FULL PRODUKTION"):
-                with st.status("🏗️ Bygger projektet...", expanded=True) as status:
+            if st.button("🚀 STARTA FULL MAXI-PRODUKTION"):
+                with st.status("🏗️ MAXIMUSIKAI bygger...", expanded=True) as status:
                     try:
                         # STEG 1: BILD
                         status.write("🎨 Genererar bild...")
@@ -127,11 +127,11 @@ if api_ready:
 
                         # STEG 4: MUSIK
                         status.write("🎵 Komponerar musik...")
-                        m_url = get_url(replicate.run("facebookresearch/musicgen", input={"prompt": f"{m_stil} music, melodic", "duration": 8}))
+                        m_url = get_url(replicate.run("facebookresearch/musicgen", input={"prompt": f"{m_stil} style, melodic", "duration": 8}))
 
                         # STEG 5: MIXNING & SPARA
-                        status.write("🧪 Mixar slutprodukten...")
-                        v_filename = f"proj_{int(time.time())}.mp4"
+                        status.write("🧪 Slutför MAXI-mix...")
+                        v_filename = f"maxi_{int(time.time())}.mp4"
                         with open("v_tmp.mp4", "wb") as f: f.write(requests.get(v_url).content)
                         with open("a_tmp.mp3", "wb") as f: f.write(requests.get(m_url).content)
                         
@@ -148,7 +148,7 @@ if api_ready:
                             "lyrics": lyrics
                         })
                         
-                        status.update(label="✅ PROJEKT KLART!", state="complete")
+                        status.update(label="✅ MAXIMUSIKAI KLAR!", state="complete")
                         with c2:
                             st.video(v_filename)
                             st.markdown(f'<div class="lyrics-box"><b>{proj_name}</b><br>{lyrics}</div>', unsafe_allow_html=True)
@@ -156,26 +156,27 @@ if api_ready:
 
     # --- FLIK 4: BIBLIOTEK ---
     with tab4:
-        st.subheader("Ditt Projekt-Arkiv")
+        st.subheader("Ditt MAXI-Arkiv")
         if not st.session_state.gallery:
-            st.info("Biblioteket är tomt.")
+            st.info("Biblioteket är tomt. Börja skapa i fliken TOTAL MAGI!")
         else:
             for item in reversed(st.session_state.gallery):
                 with st.expander(f"📁 {item['name']} ({item['time']})"):
-                    col_a, col_b = st.columns([2, 1])
+                    col_a, col_b = st.columns()
                     with col_a:
                         st.video(item['video'])
                     with col_b:
                         st.write(f"**Vision:** {item['prompt']}")
-                        st.write(f"**Text:**\n{item['lyrics']}")
+                        st.write(f"**Sångtext:**\n{item['lyrics']}")
                         with open(item['video'], "rb") as f:
-                            st.download_button(f"Ladda ner MP4", f, file_name=f"{item['name']}.mp4")
+                            st.download_button(f"Spara {item['name']}", f, file_name=f"{item['name']}.mp4")
 
-    # (Flik 2 & 3 implementeras på samma sätt med Replicate-anrop vid behov)
-    with tab2: st.write("Här kan du ladda upp bilder och animera dem manuellt.")
-    with tab3: st.write("Här genererar du bara ljudspår.")
+    # Flik 2 & 3
+    with tab2: st.info("Här kan du snart animera egna bilder i MAXI-stil!")
+    with tab3: st.info("Här genererar du bara ljudspår för dina projekt.")
 
-st.markdown("<br><center><small>TOMINGAI MEGA ENGINE // 2024</small></center>", unsafe_allow_html=True)
+st.markdown("<br><center><small>MAXIMUSIKAI // PRO EDITION // 2024</small></center>", unsafe_allow_html=True)
+
 
 
 
