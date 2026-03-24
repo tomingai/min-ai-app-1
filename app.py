@@ -26,29 +26,33 @@ st.markdown("""
     .stTabs [data-baseweb="tab"] p {
         color: #FFFFFF !important; 
         font-weight: 900 !important;
-        font-size: 22px !important;
-        text-shadow: 0 0 5px rgba(255,255,255,0.2);
+        font-size: 24px !important; /* Större text */
+        text-shadow: 0 0 10px rgba(255,255,255,0.5);
         text-transform: uppercase;
+        letter-spacing: 2px;
     }
     .stTabs [aria-selected="true"] p {
         color: #bf00ff !important;
-        text-shadow: 0 0 15px #bf00ff;
+        text-shadow: 0 0 20px #bf00ff;
+    }
+    .stTabs [data-baseweb="tab-highlight"] {
+        background-color: #bf00ff !important;
     }
 
     .neon-container {
         background: rgba(10, 10, 10, 0.85);
         padding: 40px; border-radius: 30px; 
-        border: 2px solid rgba(191, 0, 255, 0.4);
-        box-shadow: 0px 0px 60px rgba(191, 0, 255, 0.2);
+        border: 2px solid rgba(191, 0, 255, 0.6);
+        box-shadow: 0px 0px 60px rgba(191, 0, 255, 0.3);
         text-align: center; margin-bottom: 40px;
         backdrop-filter: blur(15px);
     }
     .neon-title { 
-        font-family: 'Arial Black', sans-serif; font-size: 70px; font-weight: 900; 
-        color: #fff; text-shadow: 0 0 10px #bf00ff, 0 0 30px #bf00ff; margin: 0; 
+        font-family: 'Arial Black', sans-serif; font-size: 80px; font-weight: 900; 
+        color: #fff; text-shadow: 0 0 15px #bf00ff, 0 0 40px #bf00ff; margin: 0; 
     }
     .stButton>button {
-        background: rgba(191, 0, 255, 0.05); color: #bf00ff; 
+        background: rgba(191, 0, 255, 0.1); color: #bf00ff; 
         border: 2px solid #bf00ff; width: 100%; font-weight: bold; 
         border-radius: 12px; height: 3.5em; text-transform: uppercase;
     }
@@ -75,20 +79,20 @@ if api_ready:
     with tab1:
         c1, c2 = st.columns([1, 1.2])
         with c1:
-            m_ide = st.text_area("Vad ska vi skapa?", "En futuristisk stad")
+            m_ide = st.text_area("VAD SKALL VI SKAPA IDAG?", "En futuristisk stad i lila neon")
             if st.button("🚀 STARTA PRODUKTION"):
-                with st.status("🏗️ MAXIMUSIKAI bygger...") as status:
+                with st.status("🏗️ MAXIMUSIKAI BYGGER...") as status:
                     # Logiken för generering här...
                     time.sleep(2)
                     status.update(label="✅ KLART!", state="complete")
-                    st.success("Produktion slutförd!")
+                    st.success("DIN MUSIKVIDEO ÄR REDO!")
 
-    # Community-fliken (Database logik)
     with tab5:
-        st.markdown("<h2 style='text-align:center; color:#bf00ff;'>🌐 GLOBAL COMMUNITY</h2>", unsafe_allow_html=True)
-        st.info("Koppla din databas för att se globala inlägg.")
+        st.markdown("<h2 style='text-align:center; color:#bf00ff;'>🌐 COMMUNITY HUB</h2>", unsafe_allow_html=True)
+        st.info("Här kommer vi dela allas musik när databasen är på plats!")
 
 st.markdown("<br><center><small>MAXIMUSIKAI // 2024</small></center>", unsafe_allow_html=True)
+
 
 
 
