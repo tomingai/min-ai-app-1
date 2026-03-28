@@ -27,6 +27,7 @@ def safe_replicate_run(model, input_data):
         if "moondream" in model or "llama" in model: return res
         return sanitize_url(res)
     except Exception as e:
+        st.error(f"Neural Error: {e}")
         return None
 
 # --- 3. INITIALISERING ---
@@ -37,11 +38,10 @@ if "page" not in st.session_state:
         "style": "Photorealistic", "bg_opacity": 0.85
     })
 
-# --- 4. UI ENGINE (Optimerad för skapade bilder) ---
+# --- 4. UI ENGINE (Dynamic CSS) ---
 accent = st.session_state.accent
 st.markdown(f"""
     <style>
-    /* Bakgrunden fixeras och täcker hela ytan */
     [data-testid="stAppViewContainer"] {{ 
         background: linear-gradient(rgba(0,0,0,{st.session_state.bg_opacity}), rgba(0,0,0,{st.session_state.bg_opacity})), 
                     url("{st.session_state.wallpaper}"); 
@@ -55,7 +55,7 @@ st.markdown(f"""
         background: rgba(0, 10, 30, 0.7); 
         backdrop-filter: blur(40px); 
         border: 1px solid {accent}44; 
-        border-radius: 20px; padding: 25px; 
+        border-radius: 20px; padding: 25px; margin-bottom: 20px;
     }}
 
     h1, h2, h3, label, p {{ 
@@ -66,13 +66,18 @@ st.markdown(f"""
     .stButton>button {{ 
         border: 1px solid {accent}66 !important; 
         background: {accent}11 !important; 
-        color: white !important; border-radius: 12px;
+        color: white !important; border-radius: 12px; height: 3rem;
+    }}
+    
+    .neural-console {{ 
+        background: rgba(0,0,0,0.8); border: 1px solid {accent}44; 
+        padding: 12px; border-radius: 8px; font-family: monospace; color: {accent}; 
     }}
     </style>
 """, unsafe_allow_html=True)
 
 # --- 5. NAVIGATION & KONTROLLER ---
-st.markdown('<div class="glass" style="padding: 10px; margin-bottom: 20px;">', unsafe_allow_html=True)
+st.markdown('<div class="glass" style="padding: 10px;">', unsafe_allow_html=True)
 c_nav, c_dim = st.columns([0.8, 0.2])
 
 with c_nav:
@@ -98,15 +103,33 @@ if st.session_state.page == "SYNTH":
     with c1:
         st.session_state.style = st.selectbox("STIL:", ["Photorealistic", "Cinematic", "Cyberpunk", "Digital Art"])
     with c2:
-        aspect = st.selectbox("FORMAT:", ["1:1", "16:9", "9:16", "21:9"], index=1)
+        aspect = st.selectbox("FORMAT:", ["1:1", "16:9", "9:16", "3:2", "4:3", "21:9"], index=1)
 
     if st.button("🚀 GENERERA"):
         if user_p:
             with st.status("Neural kedja aktiv...", expanded=True) as status:
-                st.write("Optimerar prompt...")
-                raw_exp = "".join(list(replicate.run("meta/meta-llama-3-8b-instruct", input={"prompt": f"Expand: {user_p} ({st.session_state.style})", "max_new_tokens": 100})))
+                st.write("Optimerar vision...")
+                
+                # Robust LLM Expansion
+                final_prompt = user_p
+                try:
+                    raw_exp = ""
+                    for event in replicate.stream(
+                        "meta/meta-llama-3-8b-instruct",
+                        input={"prompt": f"Expand this to a {st.session_state.style} image prompt: {user_p}. Max 70 words. No intro."}
+                    ):
+                        raw_exp += str(event)
+                    if raw_exp: final_prompt = clean_prompt(raw_exp)
+                except:
+                    st.warning("LLM Expansion misslyckades, använder rå-prompt.")
+
                 st.write("Renderar pixlar...")
-                url = safe_replicate_run("black-forest-labs/flux-schnell", {"prompt": clean_prompt(raw_exp), "aspect_ratio": aspect})
+                url = safe_replicate_run("black-forest-labs/flux-schnell", {
+                    "prompt": final_prompt, 
+                    "aspect_ratio": aspect,
+                    "output_format": "webp"
+                })
+
                 if url:
                     st.session_state.last_img = url
                     st.session_state.library.append({"url": url, "prompt": user_p, "ts": datetime.now().strftime("%H:%M")})
@@ -134,4 +157,16 @@ elif st.session_state.page == "ARKIV":
                     st.session_state.last_img = item['url']
                     st.session_state.wallpaper = item['url']; st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
+
+elif st.session_state.page == "ENGINE":
+    st.markdown('<div class="glass">', unsafe_allow_html=True)
+    st.subheader("🖼️ VISION ENGINE")
+    if st.session_state.last_img:
+        st.image(st.session_state.last_img, width=400)
+        if st.button("🔍 ANALYSERA"):
+            res = safe_replicate_run("lucataco/moondream2", {"image": st.session_state.last_img, "prompt": "Describe details."})
+            st.info(res)
+    else: st.info("Skapa en bild först.")
+    st.markdown('</div>', unsafe_allow_html=True)
+
 
